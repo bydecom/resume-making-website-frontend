@@ -100,7 +100,7 @@ const Header = () => {
           <div className="flex justify-between items-center">
             <Link to="/" className="flex items-center">
               <img src={logoImage} alt="Logo" className="h-8 w-auto mr-2" />
-              <span className="text-xl font-semibold text-gray-800">bestcv.io</span>
+              <span className="text-xl font-semibold text-gray-800">BestResume.io</span>
             </Link>
             
             <nav className="hidden lg:flex items-center space-x-6">

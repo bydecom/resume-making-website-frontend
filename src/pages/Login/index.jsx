@@ -140,7 +140,7 @@ const Login = () => {
         <div className="hidden md:flex md:w-1/2 bg-blue-50">
           <div className="flex items-center justify-center w-full h-full p-8">
             <div className="max-w-md">
-              <h1 className="text-3xl font-bold text-blue-600 mb-4">Welcome to BestCV.io</h1>
+              <h1 className="text-3xl font-bold text-blue-600 mb-4">Welcome to BestResume.io</h1>
               <p className="text-base text-gray-600 mb-6">
                 Log in to your account to access your personalized dashboard and continue building your professional
                 profile.
