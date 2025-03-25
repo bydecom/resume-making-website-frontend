@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import logoImage from '../assets/icons/easy-builder.png';
 
@@ -10,84 +10,104 @@ const Header = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState('');
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [user, setUser] = useState(null);
+  const [isNavigating, setIsNavigating] = useState(false);
   let lastScrollPosition = 0;
   
-  // Sử dụng useRef để theo dõi trạng thái mount của component
-  const isMountedRef = useRef(true);
-
-  // Thiết lập isMounted khi component mount và cleanup khi unmount
-  useEffect(() => {
-    isMountedRef.current = true;
+  const checkLoginStatus = () => {
+    const token = localStorage.getItem('token');
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
     
-    return () => {
-      // Đánh dấu component đã unmount
-      isMountedRef.current = false;
-    };
-  }, []);
+    if (token) {
+      setIsLoggedIn(true);
+      setUserName(userData.name || 'User');
+    } else {
+      setIsLoggedIn(false);
+      setUserName('');
+    }
+  };
 
-  // Kiểm tra đăng nhập khi component được render hoặc khi location thay đổi
-  useEffect(() => {
-    const checkLoginStatus = () => {
-      const token = localStorage.getItem('token');
-      const userData = JSON.parse(localStorage.getItem('userData') || '{}');
-      
-      if (token) {
-        setIsLoggedIn(true);
-        setUserName(userData.name || 'User');
-      } else {
-        setIsLoggedIn(false);
-        setUserName('');
-      }
-    };
-    
-    checkLoginStatus();
-  }, [location]); // Thêm location vào dependencies để cập nhật khi route thay đổi
+  const handleNavigation = (path) => {
+    // Nếu chưa đăng nhập và đang cố truy cập các trang cần auth
+    if (!isLoggedIn && ['/dashboard', '/profile', '/convert', '/reviewcv'].includes(path)) {
+      // Lưu đường dẫn muốn đến vào localStorage
+      localStorage.setItem('redirectAfterLogin', path);
+      // Chuyển hướng đến trang login
+      navigate('/login');
+      return;
+    }
+
+    // Nếu đã đăng nhập hoặc đường dẫn không cần auth thì xử lý bình thường
+    window.isUnmounting = true;
+    setIsNavigating(true);
+    setIsMenuOpen(false);
+    setIsProfileDropdownOpen(false);
+    navigate(path);
+  };
 
   const handleLogout = async () => {
-    // Đóng dropdown trước khi xóa dữ liệu và chuyển hướng
+    // Đánh dấu đang chuyển trang
+    setIsNavigating(true);
     setIsProfileDropdownOpen(false);
+    setIsMenuOpen(false);
     
-    // Đánh dấu component sẽ unmount để ngăn các animation tiếp tục
-    // Đặt biến global để các component khác có thể kiểm tra
-    window.isUnmounting = true;
-    
-    // Đợi một chút để animation dropdown kết thúc
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    // Sau đó mới xóa dữ liệu và chuyển hướng
+    // Xóa dữ liệu đăng nhập
     localStorage.removeItem('token');
     localStorage.removeItem('role');
     localStorage.removeItem('userData');
     setIsLoggedIn(false);
     
-    // Chuyển hướng đến trang login
-    navigate('/login');
+    // Đợi một chút để các animation kết thúc
+    // trước khi chuyển hướng
+    setTimeout(() => {
+      navigate('/login');
+    }, 10);
   };
 
   const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
+    if (!isNavigating) {
+      setIsMenuOpen(!isMenuOpen);
+    }
   };
 
   const toggleProfileDropdown = () => {
-    setIsProfileDropdownOpen(!isProfileDropdownOpen);
+    if (!isNavigating) {
+      setIsProfileDropdownOpen(!isProfileDropdownOpen);
+    }
   };
 
   const handleScroll = () => {
-    const currentScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
-    if (currentScrollPosition < lastScrollPosition) {
-      setIsHeaderVisible(true);
-    } else {
-      setIsHeaderVisible(false);
+    if (!isNavigating) {
+      const currentScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+      if (currentScrollPosition < lastScrollPosition) {
+        setIsHeaderVisible(true);
+      } else {
+        setIsHeaderVisible(false);
+      }
+      lastScrollPosition = currentScrollPosition;
     }
-    lastScrollPosition = currentScrollPosition;
   };
 
   useEffect(() => {
+    checkLoginStatus();
     window.addEventListener('scroll', handleScroll);
+    
     return () => {
       window.removeEventListener('scroll', handleScroll);
+      setIsNavigating(false);
     };
   }, []);
+
+  useEffect(() => {
+    // Reset navigation state after route change
+    setIsNavigating(false);
+  }, [location]);
+
+  // Thêm điều kiện kiểm tra đường dẫn để ẩn header
+  if (location.pathname === '/new-cv' || location.pathname.includes('/edit-cv/')) {
+    return null;
+  }
 
   return (
     <div
@@ -98,27 +118,27 @@ const Header = () => {
       <header className="bg-white shadow-sm border-t border-gray-200">
         <nav className="container mx-auto px-4 py-6">
           <div className="flex justify-between items-center">
-            <Link to="/" className="flex items-center">
+            <button onClick={() => handleNavigation('/')} className="flex items-center">
               <img src={logoImage} alt="Logo" className="h-8 w-auto mr-2" />
               <span className="text-xl font-semibold text-gray-800">BestResume.io</span>
-            </Link>
+            </button>
             
             <nav className="hidden lg:flex items-center space-x-6">
-              <Link to="/dashboard" className="flex items-center hover:text-gray-800">
+              <button onClick={() => handleNavigation('/dashboard')} className="flex items-center hover:text-gray-800">
                 Dashboard
-              </Link>
-              <Link to="/convert" className="hover:text-gray-800">
+              </button>
+              <button onClick={() => handleNavigation('/convert')} className="hover:text-gray-800">
                 Convert CV
-              </Link>
-              <a className="hover:text-gray-800" href="/reviewcv" rel="noopener noreferrer">
+              </button>
+              <button onClick={() => handleNavigation('/reviewcv')} className="hover:text-gray-800">
                 CV Review
-              </a>
-              <Link to="/emaileditor" className="flex items-center hover:text-gray-800">
+              </button>
+              <button onClick={() => handleNavigation('/emaileditor')} className="flex items-center hover:text-gray-800">
                 Cover Letter
-              </Link>
-              <Link to="/enhancemail" className="flex items-center hover:text-gray-800">
+              </button>
+              <button onClick={() => handleNavigation('/enhancemail')} className="flex items-center hover:text-gray-800">
                 Enhance Letter
-              </Link>
+              </button>
 
               <div className="w-px h-6 bg-gray-300 mx-2"></div>
               {isLoggedIn ? (
@@ -126,6 +146,7 @@ const Header = () => {
                   <button
                     onClick={toggleProfileDropdown}
                     className="flex items-center bg-blue-500 text-white font-semibold px-6 py-2 rounded-md hover:bg-blue-600 transition duration-300"
+                    disabled={isNavigating}
                   >
                     <span className="mr-2">{userName}</span>
                     <svg 
@@ -138,16 +159,14 @@ const Header = () => {
                     </svg>
                   </button>
                   
-                  {/* Profile Dropdown */}
-                  {isProfileDropdownOpen && (
+                  {isProfileDropdownOpen && !isNavigating && (
                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
-                      <Link 
-                        to="/profile" 
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        onClick={() => setIsProfileDropdownOpen(false)}
+                      <button 
+                        onClick={() => handleNavigation('/profile')}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       >
                         Profile
-                      </Link>
+                      </button>
                       <button
                         onClick={handleLogout}
                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -158,12 +177,13 @@ const Header = () => {
                   )}
                 </div>
               ) : (
-                <Link
-                  to="/login"
+                <button
+                  onClick={() => handleNavigation('/login')}
                   className="bg-blue-500 text-white font-semibold px-6 py-2 rounded-md hover:bg-blue-600 transition duration-300"
+                  disabled={isNavigating}
                 >
                   Login
-                </Link>
+                </button>
               )}
             </nav>
 
@@ -171,6 +191,7 @@ const Header = () => {
               <button
                 onClick={toggleMenu}
                 className="text-gray-600 hover:text-gray-800 focus:outline-none"
+                disabled={isNavigating}
               >
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   {!isMenuOpen ? (
@@ -195,57 +216,48 @@ const Header = () => {
         </nav>
 
         {/* Mobile Menu */}
-        <div
-          className={`lg:hidden transition-all duration-200 ease-out ${
-            isMenuOpen
-              ? 'transform scale-100 opacity-100'
-              : 'transform scale-95 opacity-0 hidden'
-          }`}
-        >
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            <Link to="/templates" className="block text-gray-600 hover:text-gray-800 py-2">
-              Resume
-            </Link>
-            <Link to="/convert" className="block text-gray-600 hover:text-gray-800 py-2">
-              Convert CV
-            </Link>
-            <a
-              href="/reviewcv"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block text-gray-600 hover:text-gray-800 py-2"
-            >
-              CV Review
-            </a>
-            <Link to="/emaileditor" className="block text-gray-600 hover:text-gray-800 py-2">
-              Cover Letter
-            </Link>
-            <Link to="/enhancemail" className="block text-gray-600 hover:text-gray-800 py-2">
-              Enhance Letter
-            </Link>
+        {isMenuOpen && !isNavigating && (
+          <div className="lg:hidden">
+            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+              <button onClick={() => handleNavigation('/templates')} className="block w-full text-left text-gray-600 hover:text-gray-800 py-2">
+                Resume
+              </button>
+              <button onClick={() => handleNavigation('/convert')} className="block w-full text-left text-gray-600 hover:text-gray-800 py-2">
+                Convert CV
+              </button>
+              <button onClick={() => handleNavigation('/reviewcv')} className="block w-full text-left text-gray-600 hover:text-gray-800 py-2">
+                CV Review
+              </button>
+              <button onClick={() => handleNavigation('/emaileditor')} className="block w-full text-left text-gray-600 hover:text-gray-800 py-2">
+                Cover Letter
+              </button>
+              <button onClick={() => handleNavigation('/enhancemail')} className="block w-full text-left text-gray-600 hover:text-gray-800 py-2">
+                Enhance Letter
+              </button>
 
-            {isLoggedIn ? (
-              <>
-                <Link to="/profile" className="block text-gray-600 hover:text-gray-800 py-2">
-                  Profile
-                </Link>
+              {isLoggedIn ? (
+                <>
+                  <button onClick={() => handleNavigation('/profile')} className="block w-full text-left text-gray-600 hover:text-gray-800 py-2">
+                    Profile
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="block w-full text-left bg-blue-500 text-white font-semibold px-4 py-2 rounded-md hover:bg-blue-600 transition duration-300 mt-2"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
                 <button
-                  onClick={handleLogout}
+                  onClick={() => handleNavigation('/login')}
                   className="block w-full text-left bg-blue-500 text-white font-semibold px-4 py-2 rounded-md hover:bg-blue-600 transition duration-300 mt-2"
                 >
-                  Logout
+                  Login
                 </button>
-              </>
-            ) : (
-              <Link
-                to="/login"
-                className="block bg-blue-500 text-white font-semibold px-4 py-2 rounded-md hover:bg-blue-600 transition duration-300 mt-2"
-              >
-                Login
-              </Link>
-            )}
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </header>
 
       <style jsx>{`

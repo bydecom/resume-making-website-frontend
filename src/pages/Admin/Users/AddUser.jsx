@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from '../../../utils/axios';
+import axios from '../../../utils/api';
 
 const AddUser = () => {
   const navigate = useNavigate();

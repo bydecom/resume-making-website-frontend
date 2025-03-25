@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { motion, useAnimationControls } from 'framer-motion';
-import heroImage from '../../../assets/resume-02.jpg';
+import heroImage from '../../../assets/resume-02.webp';
 import { FiChevronRight } from 'react-icons/fi';
 
 const HeroSection = () => {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import axios from '../../../utils/axios';
+import axios from '../../../utils/api';
 
 // Create axios instance with interceptors
 const api = axios.create({

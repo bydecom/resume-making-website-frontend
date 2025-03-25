@@ -1,37 +1,98 @@
 import axios from 'axios';
 
-// Create an axios instance with a base URL that matches your backend
-// If your original code was working, let's keep the same configuration
+// BASE URL
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+// Tạo axios instance
 const api = axios.create({
-  // Use the exact same base URL that was working before
-  baseURL: 'http://localhost:5000'
+  baseURL: API_URL
 });
 
-// Add auth token to every request
+// Thêm token xác thực vào mỗi request
 api.interceptors.request.use(config => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('token') || localStorage.getItem('authToken');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
 
-// Handle token expiration
+// Xử lý lỗi và token hết hạn
 api.interceptors.response.use(
   response => response,
   error => {
+    console.error('API Error:', error);
+    
+    // Xử lý lỗi 401 (Unauthorized)
     if (error.response?.status === 401) {
-      // Token expired or invalid
+      // Xóa dữ liệu xác thực
       localStorage.removeItem('token');
+      localStorage.removeItem('authToken');
       localStorage.removeItem('userId');
       localStorage.removeItem('userName');
       localStorage.removeItem('userRole');
       
-      // Redirect to login page
+      // Chuyển hướng đến trang đăng nhập
+      alert('Your session has expired. Please log in again.');
       window.location.href = '/login';
     }
+    
     return Promise.reject(error);
   }
 );
+
+/**
+ * Xử lý lỗi API chung
+ * @param {Error} error - Lỗi từ API
+ * @param {Function} navigate - Function navigate từ react-router
+ * @returns {string} Thông báo lỗi
+ */
+export const handleApiError = (error, navigate) => {
+  console.error('API Error:', error);
+  
+  // Nếu lỗi 401 (Unauthorized), chuyển hướng về trang đăng nhập
+  if (error.response?.status === 401) {
+    alert('Your session has expired. Please log in again.');
+    navigate('/login');
+    return 'Authentication failed';
+  }
+  
+  // Hiển thị thông báo lỗi dựa trên response
+  if (error.response?.data?.message) {
+    return error.response.data.message;
+  }
+  
+  // Thông báo lỗi mặc định
+  return error.message || 'An unexpected error occurred';
+};
+
+/**
+ * Gọi API với JWT token (sử dụng axios)
+ * @param {string} endpoint - API endpoint
+ * @param {string} method - HTTP method
+ * @param {Object} data - Dữ liệu gửi lên API
+ * @returns {Promise} Promise với kết quả từ API
+ */
+export const callApi = async (endpoint, method = 'GET', data = null) => {
+  try {
+    const config = {
+      method: method,
+      url: endpoint
+    };
+    
+    if (data) {
+      config.data = data;
+    }
+    
+    const response = await api(config);
+    return response.data;
+  } catch (error) {
+    const errorData = error.response?.data || {};
+    const customError = new Error(errorData.message || error.message);
+    customError.status = error.response?.status;
+    customError.data = errorData;
+    throw customError;
+  }
+};
 
 export default api; 

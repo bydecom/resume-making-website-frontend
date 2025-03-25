@@ -1,7 +1,11 @@
 import React, { useState } from "react";
 import { Plus, MoreVertical, FileText, Download, Edit, Trash2, Eye, XCircle, Copy } from "lucide-react";
+import { useNavigate } from 'react-router-dom';
+import CreateCVModal from '../../../components/CreateCVModal';
 
 const CVSection = () => {
+  const navigate = useNavigate();
+
   // Sample data for demonstration
   const sampleCVs = [
     {
@@ -44,6 +48,8 @@ const CVSection = () => {
 
   const [activeMenuId, setActiveMenuId] = useState(null);
   const [previewCV, setPreviewCV] = useState(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createModalKey, setCreateModalKey] = useState(0);
 
   const toggleMenu = (id) => {
     setActiveMenuId(activeMenuId === id ? null : id);
@@ -56,6 +62,20 @@ const CVSection = () => {
 
   const closePreview = () => {
     setPreviewCV(null);
+  };
+
+  const handleCreateNewCV = () => {
+    setCreateModalKey(prev => prev + 1);
+    setShowCreateModal(true);
+  };
+
+  const handleCloseCreateModal = () => {
+    setShowCreateModal(false);
+  };
+
+  const handleEditCV = (cvId) => {
+    window.hideHeader = true;
+    navigate(`/edit-cv/${cvId}`);
   };
 
   const getIconColor = (color) => {
@@ -76,8 +96,13 @@ const CVSection = () => {
           <h2 className="text-3xl font-bold text-gray-800">Your CV Collection</h2>
           <p className="text-gray-500 mt-2">Manage and create professional resumes for your job applications</p>
         </div>
-        <button className="px-4 py-2.5 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-sm">
-          <Plus className="h-5 w-5" />
+        <button
+          onClick={handleCreateNewCV}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center"
+        >
+          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          </svg>
           Create New CV
         </button>
       </div>
@@ -141,7 +166,7 @@ const CVSection = () => {
                         <Eye className="h-4 w-4" />
                         Preview
                       </button>
-                      <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2">
+                      <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2" onClick={() => handleEditCV(cv.id)}>
                         <Edit className="h-4 w-4" />
                         Edit
                       </button>
@@ -197,7 +222,7 @@ const CVSection = () => {
                 {cv.pages} {cv.pages === 1 ? 'page' : 'pages'} · {cv.fileSize}
               </div>
               <div className="flex gap-2">
-                <button className="p-2 rounded hover:bg-gray-200 transition-colors" title="Edit">
+                <button className="p-2 rounded hover:bg-gray-200 transition-colors" title="Edit" onClick={() => handleEditCV(cv.id)}>
                   <Edit className="h-4 w-4 text-gray-600" />
                 </button>
                 <button className="p-2 rounded hover:bg-gray-200 transition-colors" title="Download">
@@ -275,12 +300,21 @@ const CVSection = () => {
           <FileText className="h-16 w-16 text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900">No CVs created yet</h3>
           <p className="mt-2 text-gray-500">Create your first professional CV to get started</p>
-          <button className="mt-6 px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 inline-flex items-center gap-2">
+          <button 
+            onClick={handleCreateNewCV}
+            className="mt-6 px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 inline-flex items-center gap-2"
+          >
             <Plus className="h-5 w-5" />
             Create New CV
           </button>
         </div>
       )}
+
+      <CreateCVModal 
+        key={createModalKey}
+        isOpen={showCreateModal} 
+        onClose={handleCloseCreateModal} 
+      />
     </section>
   );
 };

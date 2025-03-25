@@ -126,6 +126,15 @@ const Login = () => {
     navigate(-1);
   };
 
+  const handleLoginSuccess = () => {
+    // Lấy đường dẫn đã lưu từ localStorage
+    const redirectPath = localStorage.getItem('redirectAfterLogin') || '/';
+    // Xóa redirectPath khỏi localStorage
+    localStorage.removeItem('redirectAfterLogin');
+    // Chuyển hướng người dùng
+    navigate(redirectPath);
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <button 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import axios from '../../../utils/axios';
+import axios from '../../../utils/api';
 
 const EditUser = () => {
   const { userId } = useParams();

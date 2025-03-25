@@ -11,12 +11,13 @@ import Convert from './pages/Convert';
 import EmailEditor from './pages/EmailEditor';
 import EnhanceMail from './pages/EnhanceMail';
 import About from './pages/About';
-import Login from './pages/Login';
-import Register from './pages/Register';
+import Auth from './pages/Auth';
+import Profile from './pages/Profile';
+
 import AdminRegister from './pages/AdminRegister';
 import NotFound from './pages/NotFound';
 import Unauthorized from './pages/Unauthorized';
-
+import NewCV from './pages/NewCV';
 // Import Admin sub-pages
 import AdminDashboard from './pages/Admin/Dashboard';
 import AllUsers from './pages/Admin/Users/AllUsers';
@@ -30,13 +31,31 @@ import AdminPage from './pages/Admin';
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRole }) => {
   const token = localStorage.getItem('token');
+  
+  // Kiểm tra role từ nhiều nguồn
   const userRole = localStorage.getItem('userRole');
+  const role = localStorage.getItem('role');
+  const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+  
+  // Console log để debug
+  console.log('Protected Route Check:');
+  console.log('token:', token);
+  console.log('userRole:', userRole);
+  console.log('role:', role);
+  console.log('userData.role:', userData.role);
   
   if (!token) {
+    console.log('No token found, redirecting to login');
     return <Navigate to="/login" />;
   }
   
-  if (allowedRole && userRole !== allowedRole) {
+  // Kiểm tra role từ nhiều nguồn
+  const effectiveRole = userRole || role || userData.role;
+  console.log('Effective role:', effectiveRole);
+  console.log('Required role:', allowedRole);
+  
+  if (allowedRole && effectiveRole !== allowedRole) {
+    console.log('Role mismatch, redirecting to unauthorized');
     return <Navigate to="/unauthorized" />;
   }
   
@@ -50,7 +69,8 @@ const Layout = ({ children }) => {
     '/login', 
     '/register', 
     '/admin-register', 
-    '/unauthorized'
+    '/unauthorized',
+    '/new-cv'
   ];
   
   // Check if the current path is an admin route
@@ -80,8 +100,8 @@ const AppRoutes = () => {
     <Layout>
       <Routes>
         {/* Public Routes */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<Auth />} />
+        <Route path="/register" element={<Auth />} />
         <Route path="/admin-register" element={<AdminRegister />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
         
@@ -89,6 +109,8 @@ const AppRoutes = () => {
         <Route path="/" element={<Home />} />
         <Route path="/home" element={<Home />} />
         <Route path="/about" element={<About />} />
+        <Route path="/profile" element={<Profile />} />
+
         
         {/* Protected Routes */}
         <Route 
@@ -99,6 +121,7 @@ const AppRoutes = () => {
             </ProtectedRoute>
           } 
         />
+        
         <Route 
           path="/convert" 
           element={
@@ -123,7 +146,14 @@ const AppRoutes = () => {
             </ProtectedRoute>
           } 
         />
-        
+        <Route 
+          path="/new-cv" 
+          element={
+            <ProtectedRoute>
+              <NewCV />
+            </ProtectedRoute>
+          } 
+        />
         {/* Admin Routes */}
         <Route 
           path="/admin" 

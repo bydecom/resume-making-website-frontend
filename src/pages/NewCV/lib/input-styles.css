@@ -1,0 +1,38 @@
+/* Common input styles for NewCV components */
+
+.cv-input {
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+.cv-textarea {
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  max-width: 100%;
+  hyphens: auto;
+}
+
+.cv-wrapper {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.cv-long-text {
+  word-break: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+  hyphens: auto;
+}
+
+.cv-flex-item {
+  word-break: break-word;
+  overflow-wrap: break-word;
+  flex: 1;
+  min-width: 0;
+  hyphens: auto;
+} 

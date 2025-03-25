@@ -1,7 +1,27 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import api, { handleApiError } from '../../utils/api';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
+  const [dashboardData, setDashboardData] = useState(null);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
+
+  const fetchDashboardData = async () => {
+    try {
+      const response = await api.get('/admin/dashboard');
+      setDashboardData(response.data);
+    } catch (error) {
+      const errorMessage = handleApiError(error, navigate);
+      setError(errorMessage);
+    }
+  }
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
   return (
     <div>
       <h2 className="text-2xl font-semibold mb-4 text-gray-800">Welcome to Admin Dashboard</h2>

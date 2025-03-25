@@ -63,13 +63,13 @@ const MetricSection = () => {
   const metrics = [
     {
       icon: FiUsers,
-      value: "500K+",
+      value: "300K+",
       label: "Users Worldwide"
     },
     {
       icon: FiBriefcase,
-      value: "10M+",
-      label: "CVs Created"
+      value: "1M+",
+      label: "Resumes Created"
     },
     {
       icon: FiAward,

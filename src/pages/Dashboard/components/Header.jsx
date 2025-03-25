@@ -1,7 +1,17 @@
 import React from "react";
 import { Search, Menu, FileText } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const Header = ({ sidebarOpen, setSidebarOpen }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogin = () => {
+    // Lưu current path vào localStorage trước khi redirect tới trang login
+    localStorage.setItem('redirectAfterLogin', location.pathname);
+    navigate('/login');
+  };
+
   return (
     <header className="border-b bg-white">
       <div className="flex items-center h-16 px-4">
@@ -24,7 +34,10 @@ const Header = ({ sidebarOpen, setSidebarOpen }) => {
               className="w-full bg-gray-100 border border-gray-200 rounded-md pl-8 pr-4 py-2 md:w-[300px] lg:w-[400px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
-          <button className="rounded-full overflow-hidden">
+          <button 
+            onClick={handleLogin}
+            className="rounded-full overflow-hidden"
+          >
             <img
               alt="Avatar"
               className="rounded-full"

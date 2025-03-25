@@ -35,7 +35,7 @@ const ReviewsSection = () => {
         <div className="flex flex-col md:flex-row justify-between items-start">
           <div className="w-full md:w-1/4 text-center md:text-left mb-8 md:mb-0">
             <div className="text-blue-600 text-4xl mb-2">★★★★★</div>
-            <div className="text-3xl font-bold mb-2">4.9 out of 5</div>
+            <div className="text-3xl font-bold mb-2">4.8 out of 5</div>
             <div className="text-xl font-semibold mb-2">From Community</div>
             <p className="text-base text-gray-600">based on 53,148 reviews</p>
           </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 
 // Import các icon từ react-icons
@@ -28,9 +28,37 @@ import {
   SidebarProvider,
 } from "../../components/ui/sidebar";
 
+import api, { handleApiError, callApi } from '../../utils/api';
+
 const AdminPage = () => {
   const navigate = useNavigate();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [data, setData] = useState([]);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    // Kiểm tra quyền admin ngay khi component mount
+    const token = localStorage.getItem('token');
+    const userRole = localStorage.getItem('userRole');
+    const role = localStorage.getItem('role');
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    
+    console.log('Admin Page Check:');
+    console.log('token:', token);
+    console.log('userRole:', userRole);
+    console.log('role:', role);
+    console.log('userData.role:', userData.role);
+    
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+    
+    const effectiveRole = userRole || role || userData.role;
+    if (effectiveRole !== 'admin') {
+      navigate('/unauthorized');
+    }
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -38,6 +66,16 @@ const AdminPage = () => {
     localStorage.removeItem('userData');
     navigate('/login');
   };
+
+  const fetchData = async () => {
+    try {
+      const response = await api.get('/admin/data');
+      setData(response.data);
+    } catch (error) {
+      const errorMessage = handleApiError(error, navigate);
+      setError(errorMessage);
+    }
+  }
 
   return (
     <div className="min-h-screen">

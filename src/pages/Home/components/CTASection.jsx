@@ -1,5 +1,5 @@
 import React from 'react';
-import cvSample from '../../../assets/cv-sample.jpg';
+import cvSample from '../../../assets/cv-sample.webp';
 
 const CTASection = () => {
   return (
@@ -21,8 +21,8 @@ const CTASection = () => {
             <div className="mt-8 flex items-center">
               <div className="text-3xl text-green-400 mr-4">★★★★★</div>
               <div>
-                <div className="text-xl font-bold">4.9 out of 5</div>
-                <div className="text-sm">based on 51,569 reviews from Community</div>
+                <div className="text-xl font-bold">4.8 out of 5</div>
+                <div className="text-sm">based on 53,148 reviews from Community</div>
               </div>
             </div>
           </div>

@@ -1,0 +1,181 @@
+# Tài liệu API Parse CV
+
+## 1. Tổng quan
+
+API Parse CV cung cấp endpoint để phân tích nội dung văn bản trích xuất từ CV ở định dạng PDF hoặc hình ảnh. API nhận văn bản trích xuất và trả về dữ liệu đã cấu trúc phù hợp với form dữ liệu trong ứng dụng.
+
+## 2. Endpoint API
+
+### Parse CV Text
+
+**URL:** `/api/parse-cv`  
+**Method:** `POST`  
+**Content-Type:** `application/json`
+
+### Request Body
+
+```json
+{
+  "text": "Nội dung văn bản CV đã trích xuất"
+}
+```
+
+### Response
+
+**Format:** `application/json`
+
+Cấu trúc phản hồi tuân theo cấu trúc `formData` trong `NewCV/index.jsx`:
+
+```json
+{
+  "personalInfo": {
+    "firstName": "string",
+    "lastName": "string",
+    "email": "string",
+    "phone": "string",
+    "location": "string",
+    "country": "string",
+    "website": "string",
+    "linkedin": "string"
+  },
+  "summary": "string",
+  "education": [
+    {
+      "degree": "string",
+      "school": "string",
+      "startDate": "string",
+      "endDate": "string",
+      "description": "string",
+      "isPresent": false
+    }
+  ],
+  "experience": [
+    {
+      "title": "string",
+      "company": "string",
+      "startDate": "string",
+      "endDate": "string",
+      "description": "string",
+      "isPresent": false
+    }
+  ],
+  "skills": ["string"],
+  "certifications": [
+    {
+      "name": "string",
+      "issuer": "string",
+      "date": "string",
+      "description": "string"
+    }
+  ],
+  "projects": [
+    {
+      "title": "string",
+      "role": "string",
+      "startDate": "string",
+      "endDate": "string",
+      "description": "string",
+      "url": "string",
+      "isPresent": false
+    }
+  ],
+  "languages": [
+    {
+      "name": "string",
+      "level": "string"
+    }
+  ],
+  "activities": [
+    {
+      "name": "string",
+      "description": "string"
+    }
+  ],
+  "additionalInfo": {
+    "interests": "string",
+    "achievements": "string",
+    "publications": "string",
+    "references": "string",
+  },
+  "customFields": []
+}
+```
+
+### Endpoint trực tiếp upload file
+
+**URL:** `/api/parse-cv/file`  
+**Method:** `POST`  
+**Content-Type:** `multipart/form-data`
+
+**Request body:**
+- Key: `file`
+- Value: File PDF hoặc hình ảnh
+
+### Endpoint xử lý URL PDF
+
+**URL:** `/api/parse-cv/url`  
+**Method:** `POST`  
+**Content-Type:** `application/json`
+
+**Request body:**
+```json
+{
+  "url": "https://example.com/cv.pdf"
+}
+```
+
+### Error Response
+
+```json
+{
+  "error": "Thông báo lỗi",
+  "code": "ERROR_CODE"
+}
+```
+
+## 3. Triển khai
+
+### 3.1. Trích xuất văn bản
+
+Frontend sử dụng `DocumentProcessor.js` để trích xuất văn bản từ file PDF hoặc hình ảnh:
+
+1. **Từ tệp PDF:** Sử dụng `pdfjs-dist` để trích xuất văn bản trực tiếp
+2. **Từ PDF scan:** Khi không trích xuất được văn bản trực tiếp, sử dụng OCR với `tesseract.js`
+3. **Từ hình ảnh:** Sử dụng OCR với `tesseract.js`
+
+Frontend sẽ gửi văn bản đã trích xuất đến API để phân tích.
+
+### 3.2. Parse và cấu trúc dữ liệu
+
+Backend cần phân tích văn bản trích xuất từ CV và cấu trúc nó theo định dạng cụ thể. Dữ liệu trả về cần đảm bảo tuân theo cấu trúc `formData` trong `NewCV/index.jsx`:
+
+| Trường | Loại | Mô tả |
+|--------|------|-------|
+| personalInfo | Object | Thông tin cá nhân của người dùng |
+| summary | String | Tóm tắt chuyên môn |
+| education | Array | Danh sách quá trình học tập |
+| experience | Array | Danh sách kinh nghiệm làm việc |
+| skills | Array | Danh sách kỹ năng |
+| certifications | Array | Danh sách chứng chỉ |
+| projects | Array | Danh sách dự án |
+| languages | Array | Danh sách ngôn ngữ |
+| activities | Array | Hoạt động khác |
+| additionalInfo | Object | Thông tin bổ sung |
+| customFields | Array | Trường tùy chỉnh |
+
+## 4. Luồng hoạt động
+
+1. **Frontend**: Sử dụng `DocumentProcessor.js` để trích xuất văn bản từ file CV
+2. **Frontend**: Gửi văn bản đã trích xuất đến endpoint `/api/parse-cv` thông qua `CVParser.js`
+3. **Backend**: Phân tích văn bản trích xuất và cấu trúc dữ liệu theo định dạng phù hợp
+4. **Backend**: Trả về dữ liệu đã cấu trúc cho frontend
+5. **Frontend**: Hiển thị dữ liệu trong giao diện trang `NewCV` để người dùng chỉnh sửa
+
+## 5. Ghi chú triển khai
+
+1. API không lưu trữ CV hoặc dữ liệu CV, nó chỉ phân tích và trả về kết quả
+2. Người dùng phải chỉnh sửa kết quả trước khi lưu CV
+3. Cấu trúc dữ liệu trả về phải khớp chính xác với cấu trúc formData trong `NewCV/index.jsx`
+4. Không nên thêm trường dữ liệu mới không có trong cấu trúc formData
+5. Các trường không tìm thấy trong văn bản CV nên để trống thay vì null
+6. Đối với mảng, nếu không có dữ liệu thì trả về mảng rỗng

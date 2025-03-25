@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { motion } from 'framer-motion';
+import React, { useEffect, useState } from 'react';
+import { motion, useAnimation } from 'framer-motion';
 import HeroSection from './components/HeroSection';
 import ReviewsSection from './components/ReviewsSection';
 import FeaturesSection from './components/FeaturesSection';
@@ -13,7 +13,7 @@ import AIFeatureSection from './components/AIFeatureSection';
 import StatsSection from './components/StatsSection';
 import CTA2Section from './components/CTA2Section';
 
-// Animation variants for sections - giảm duration xuống 0.1
+// Animation variants for sections
 const sectionVariants = {
   hidden: { opacity: 0, y: 30 },
   visible: { 
@@ -24,100 +24,57 @@ const sectionVariants = {
 };
 
 const Home = () => {
-  // Scroll to top when component mounts
+  const [isMounted, setIsMounted] = useState(false);
+  const controls = useAnimation();
+
+  // Handle component mount and cleanup
   useEffect(() => {
+    setIsMounted(true);
     window.scrollTo(0, 0);
-  }, []);
+    // Set global unmounting flag to false when component mounts
+    window.isUnmounting = false;
+
+    return () => {
+      // Set global unmounting flag to true when component is about to unmount
+      window.isUnmounting = true;
+      setIsMounted(false);
+      controls.stop();
+    };
+  }, [controls]);
+
+  // Only render animations if component is mounted
+  if (!isMounted) {
+    return null;
+  }
 
   return (
     <div>
       <HeroSection />
-      <motion.div
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-100px" }}
-        variants={sectionVariants}
-      >
-        <StatsSection />
-      </motion.div>
-      <motion.div
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-100px" }}
-        variants={sectionVariants}
-      >
-        <ProblemStatementSection />
-      </motion.div>
-      <motion.div
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-100px" }}
-        variants={sectionVariants}
-      >
-        <EducationSection />
-      </motion.div>
-      <hr className="border-t border-gray-200" />
-      <motion.div
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-100px" }}
-        variants={sectionVariants}
-      >
-        <SolutionSection />
-      </motion.div>
-      <hr className="border-t border-gray-200" />
-      <motion.div
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-100px" }}
-        variants={sectionVariants}
-      >
-        <CTA2Section />
-      </motion.div>
-      <hr className="border-t border-gray-200" />
-      <motion.div
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-100px" }}
-        variants={sectionVariants}
-      >
-        <ReviewsSection />
-      </motion.div>
-      <hr className="border-t border-gray-200" />
-      <motion.div
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-100px" }}
-        variants={sectionVariants}
-      >
-        <AIFeatureSection />
-      </motion.div>
-      <hr className="border-t border-gray-200" />
-      <motion.div
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-100px" }}
-        variants={sectionVariants}
-      >
-        <FeaturesSection />
-      </motion.div>
-      <hr className="border-t border-gray-200" />
-      <motion.div
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-100px" }}
-        variants={sectionVariants}
-      >
-        <MetricSection />
-      </motion.div>
-      <motion.div
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-100px" }}
-        variants={sectionVariants}
-      >
-        <CTASection />
-      </motion.div>
+      {[
+        StatsSection,
+        ProblemStatementSection,
+        EducationSection,
+        SolutionSection,
+        CTA2Section,
+        ReviewsSection,
+        AIFeatureSection,
+        FeaturesSection,
+        MetricSection,
+        CTASection
+      ].map((Section, index) => (
+        <React.Fragment key={index}>
+          {index > 0 && <hr className="border-t border-gray-200" />}
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={sectionVariants}
+            animate={controls}
+          >
+            <Section />
+          </motion.div>
+        </React.Fragment>
+      ))}
       <ScrollToTop />
     </div>
   );

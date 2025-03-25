@@ -1,314 +1,82 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
-import { Label } from '../../components/ui/label';
-import axios from '../../utils/axios';
-
-// Tạo các component icon đơn giản thay vì sử dụng react-icons
-const MailIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-  </svg>
-);
-
-const LockIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-  </svg>
-);
-
-const UserIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-  </svg>
-);
+import AuthLeftPanel from './components/AuthLeftPanel';
+import Login from './components/Login';
+import Register from './components/Register';
 
 const ArrowRightIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
   </svg>
 );
 
 const Auth = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [isLogin, setIsLogin] = useState(
-    location.pathname === '/register' ? false : true
-  );
-
-  // Login state
-  const [loginData, setLoginData] = useState({
-    email: '',
-    password: ''
-  });
-  const [loginError, setLoginError] = useState('');
-  const [isLoginLoading, setIsLoginLoading] = useState(false);
-
-  // Register state
-  const [registerData, setRegisterData] = useState({
-    name: '',
-    email: '',
-    password: ''
-  });
-  const [registerError, setRegisterError] = useState('');
-  const [isRegisterLoading, setIsRegisterLoading] = useState(false);
-
-  // Update URL when tab changes
-  useEffect(() => {
-    navigate(isLogin ? '/login' : '/register', { replace: true });
-  }, [isLogin, navigate]);
+  const isLogin = location.pathname === '/register' ? false : true;
 
   // Prevent scrolling on mount
   useEffect(() => {
-    // Lưu lại overflow style ban đầu
     const originalStyle = window.getComputedStyle(document.body).overflow;
-    // Ngăn scroll
     document.body.style.overflow = 'hidden';
-    
-    // Khôi phục khi component unmount
     return () => {
       document.body.style.overflow = originalStyle;
     };
   }, []);
 
-  const handleLoginChange = (e) => {
-    setLoginData({
-      ...loginData,
-      [e.target.name]: e.target.value
-    });
-  };
-
-  const handleRegisterChange = (e) => {
-    setRegisterData({
-      ...registerData,
-      [e.target.name]: e.target.value
-    });
-  };
-
-  const handleLoginSubmit = async (e) => {
-    e.preventDefault();
-    if (isLoginLoading) return;
-
-    try {
-      setIsLoginLoading(true);
-      setLoginError('');
-
-      const response = await axios.post('/api/users/login', loginData);
-      
-      if (response.data.status === 'success') {
-        localStorage.setItem('token', response.data.data.token);
-        localStorage.setItem('role', response.data.data.role);
-        localStorage.setItem('userData', JSON.stringify(response.data.data));
-        
-        if (response.data.data.role === 'admin') {
-          navigate('/admin');
-        } else {
-          navigate('/');
-        }
-      } else {
-        setLoginError(response.data.message || 'Login failed');
-      }
-    } catch (err) {
-      setLoginError(err.response?.data?.message || 'An error occurred');
-    } finally {
-      setIsLoginLoading(false);
-    }
-  };
-
-  const handleRegisterSubmit = async (e) => {
-    e.preventDefault();
-    if (isRegisterLoading) return;
-
-    try {
-      setIsRegisterLoading(true);
-      setRegisterError('');
-      
-      const response = await axios.post('/api/users/register', registerData);
-      
-      if (response.data.status === 'success') {
-        localStorage.setItem('token', response.data.data.token);
-        localStorage.setItem('role', response.data.data.role);
-        localStorage.setItem('userData', JSON.stringify(response.data.data));
-        navigate('/');
-      } else {
-        setRegisterError(response.data.message || 'Registration failed');
-      }
-    } catch (err) {
-      setRegisterError(err.response?.data?.message || 'An error occurred');
-    } finally {
-      setIsRegisterLoading(false);
-    }
+  const handleFormSwitch = () => {
+    navigate(isLogin ? '/register' : '/login');
   };
 
   return (
-    <div className="fixed inset-0 grid lg:grid-cols-2 overflow-hidden">
-      <div className="hidden lg:block bg-blue-600">
-        <div className="flex h-full items-center justify-center">
-          <div className="text-center text-white px-8">
-            <h1 className="text-4xl font-bold mb-4">BestCV.io</h1>
-            <p className="text-xl">Create professional resumes in minutes with our easy-to-use builder</p>
-          </div>
-        </div>
-      </div>
-      <div className="flex items-center justify-center p-8 overflow-y-auto max-h-screen">
-        <div className="mx-auto w-full max-w-md space-y-6">
-          <div className="space-y-2 text-center">
-            <h1 className="text-3xl font-bold">{isLogin ? "Welcome back" : "Create an account"}</h1>
-            <p className="text-gray-500">
-              {isLogin ? "Enter your credentials to access your account" : "Enter your information to get started"}
-            </p>
-          </div>
-          
-          {/* Login Form */}
-          <div
-            className={`space-y-4 transition-all duration-300 ${
-              isLogin 
-                ? "translate-x-0 opacity-100" 
-                : "absolute -translate-x-full opacity-0 pointer-events-none"
-            }`}
-          >
-            <form onSubmit={handleLoginSubmit}>
-              {loginError && (
-                <div className="text-red-500 text-center mb-4">{loginError}</div>
-              )}
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <div className="relative">
-                  <div className="absolute left-3 top-3 text-gray-400">
-                    <MailIcon />
-                  </div>
-                  <Input 
-                    id="email"
-                    name="email"
-                    placeholder="m@example.com" 
-                    type="email" 
-                    className="pl-10"
-                    value={loginData.email}
-                    onChange={handleLoginChange}
-                    required
-                    disabled={isLoginLoading}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2 mt-4">
-                <Label htmlFor="password">Password</Label>
-                <div className="relative">
-                  <div className="absolute left-3 top-3 text-gray-400">
-                    <LockIcon />
-                  </div>
-                  <Input 
-                    id="password"
-                    name="password"
-                    type="password" 
-                    className="pl-10"
-                    value={loginData.password}
-                    onChange={handleLoginChange}
-                    required
-                    disabled={isLoginLoading}
-                  />
-                </div>
-              </div>
-              <Button 
-                className="w-full mt-6"
-                type="submit"
-                disabled={isLoginLoading}
+    <div className="min-h-screen flex flex-col">
+      {/* Back button */}
+      <button
+        onClick={() => navigate(-1)}
+        className="absolute top-4 left-4 p-2 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors flex items-center justify-center z-10"
+        aria-label="Go back"
+      >
+        <ArrowRightIcon />
+      </button>
+
+      <div className="fixed inset-0 flex flex-col md:flex-row overflow-hidden">
+        {/* Left Panel */}
+        <AuthLeftPanel 
+          title="Create Your Professional Resume"
+          description="Join thousands of job seekers who have successfully landed their dream jobs using our platform."
+          imageSrc="/resume-builder-illustration.svg"
+        />
+
+        {/* Right Panel - Forms */}
+        <div className="flex flex-col justify-center items-center p-4 md:p-8 md:w-1/2 overflow-y-auto">
+          <div className="w-full max-w-md space-y-6">
+            <div className="text-center mb-4">
+              <h2 className="text-2xl font-bold tracking-tight">
+                {isLogin ? "Sign in to your account" : "Create an account"}
+              </h2>
+              <p className="mt-1 text-sm text-gray-500">
+                {isLogin ? "Enter your credentials to access your account" : "Enter your information to get started"}
+              </p>
+            </div>
+
+            {/* Forms */}
+            <div className="relative">
+              {isLogin ? <Login /> : <Register />}
+            </div>
+
+            {/* Toggle between login and register */}
+            <div className="text-center">
+              <Button
+                variant="link"
+                className="text-sm text-gray-500"
+                onClick={handleFormSwitch}
               >
-                {isLoginLoading ? 'Signing in...' : 'Sign in'}
-                <ArrowRightIcon />
+                {isLogin 
+                  ? "Don't have an account? Sign up" 
+                  : "Already have an account? Sign in"}
               </Button>
-            </form>
-          </div>
-          
-          {/* Register Form */}
-          <div
-            className={`space-y-4 transition-all duration-300 ${
-              !isLogin 
-                ? "translate-x-0 opacity-100" 
-                : "absolute translate-x-full opacity-0 pointer-events-none"
-            }`}
-          >
-            <form onSubmit={handleRegisterSubmit}>
-              {registerError && (
-                <div className="text-red-500 text-center mb-4">{registerError}</div>
-              )}
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <div className="relative">
-                  <div className="absolute left-3 top-3 text-gray-400">
-                    <UserIcon />
-                  </div>
-                  <Input 
-                    id="name"
-                    name="name"
-                    placeholder="John Doe" 
-                    className="pl-10"
-                    value={registerData.name}
-                    onChange={handleRegisterChange}
-                    required
-                    disabled={isRegisterLoading}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2 mt-4">
-                <Label htmlFor="register-email">Email</Label>
-                <div className="relative">
-                  <div className="absolute left-3 top-3 text-gray-400">
-                    <MailIcon />
-                  </div>
-                  <Input 
-                    id="register-email"
-                    name="email"
-                    placeholder="m@example.com" 
-                    type="email" 
-                    className="pl-10"
-                    value={registerData.email}
-                    onChange={handleRegisterChange}
-                    required
-                    disabled={isRegisterLoading}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2 mt-4">
-                <Label htmlFor="register-password">Password</Label>
-                <div className="relative">
-                  <div className="absolute left-3 top-3 text-gray-400">
-                    <LockIcon />
-                  </div>
-                  <Input 
-                    id="register-password"
-                    name="password"
-                    type="password" 
-                    className="pl-10"
-                    value={registerData.password}
-                    onChange={handleRegisterChange}
-                    required
-                    disabled={isRegisterLoading}
-                  />
-                </div>
-              </div>
-              <Button 
-                className="w-full mt-6"
-                type="submit"
-                disabled={isRegisterLoading}
-              >
-                {isRegisterLoading ? 'Creating account...' : 'Create Account'}
-                <ArrowRightIcon />
-              </Button>
-            </form>
-          </div>
-          
-          {/* Toggle between login and register */}
-          <div className="text-center">
-            <Button
-              variant="link"
-              className="text-sm text-gray-500"
-              onClick={() => setIsLogin(!isLogin)}
-            >
-              {isLogin 
-                ? "Don't have an account? Sign up" 
-                : "Already have an account? Sign in"}
-            </Button>
+            </div>
           </div>
         </div>
       </div>
