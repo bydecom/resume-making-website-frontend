@@ -5,8 +5,8 @@ const Sidebar = ({ isOpen }) => {
   return (
     <div
       className={`${
-        isOpen ? "w-64" : "w-0"
-      } transition-all duration-300 overflow-hidden border-r bg-white`}
+        isOpen ? "w-32" : "w-0"
+      } transition-all duration-300 overflow-hidden border-r bg-white flex-shrink-0 relative`}
     >
       <div className="p-4 flex items-center gap-2">
         <FileText className="h-6 w-6 text-blue-600" />

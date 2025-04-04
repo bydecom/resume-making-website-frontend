@@ -2,26 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
-import { Label } from '../../../components/ui/label';
-import { Eye, EyeOff, Check, AlertCircle } from 'lucide-react';
-import api, { handleApiError } from '../../../utils/api';
-
-// Icon components
-const MailIcon = () => (
-  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-    </svg>
-  </div>
-);
-
-const LockIcon = () => (
-  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-    </svg>
-  </div>
-);
+import { Eye, EyeOff } from 'lucide-react';
+import api from '../../../utils/api';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -32,19 +14,12 @@ const Login = () => {
   const [validation, setValidation] = useState({
     email: { isValid: false, showError: false }
   });
-  const [focusedField, setFocusedField] = useState(null);
   
   // Refs để truy cập trực tiếp vào DOM elements
   const emailInputRef = useRef(null);
   const passwordInputRef = useRef(null);
 
-  // Kiểm tra giá trị email và focus nếu không hợp lệ
-  useEffect(() => {
-    if (validation.email.showError && emailInputRef.current) {
-      emailInputRef.current.focus();
-    }
-  }, [validation.email.showError]);
-
+  // Email validation
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
@@ -60,21 +35,13 @@ const Login = () => {
         ...prev,
         email: {
           isValid: isValid,
-          // Nếu email hợp lệ, tắt thông báo lỗi; nếu không, giữ nguyên trạng thái hiển thị lỗi
           showError: isValid ? false : prev.email.showError
         }
       }));
     }
   };
 
-  const handleFocus = (name) => {
-    setFocusedField(name);
-  };
-
   const handleBlur = (name) => {
-    setFocusedField(null);
-    
-    // Validate khi blur
     if (name === 'email' && loginData.email) {
       const isValid = validateEmail(loginData.email);
       
@@ -82,13 +49,11 @@ const Login = () => {
         ...prev,
         email: {
           isValid,
-          showError: !isValid // Hiển thị lỗi nếu không hợp lệ
+          showError: !isValid
         }
       }));
       
-      // Nếu không hợp lệ, tự động focus lại vào trường email
       if (!isValid && emailInputRef.current) {
-        // Đặt setTimeout để đảm bảo focus sau khi blur hoàn tất
         setTimeout(() => {
           emailInputRef.current.focus();
         }, 10);
@@ -98,24 +63,6 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Validate email trước khi submit
-    if (loginData.email && !validateEmail(loginData.email)) {
-      setValidation(prev => ({
-        ...prev,
-        email: {
-          isValid: false,
-          showError: true
-        }
-      }));
-      
-      // Focus vào email nếu không hợp lệ
-      if (emailInputRef.current) {
-        emailInputRef.current.focus();
-      }
-      
-      return;
-    }
     
     if (isLoading) return;
 
@@ -131,143 +78,201 @@ const Login = () => {
       localStorage.setItem('userRole', response.data.data.role);
       localStorage.setItem('userData', JSON.stringify(response.data.data));
 
+      const userRole = response.data.data.role;
+      
       const redirectPath = localStorage.getItem('redirectAfterLogin');
       localStorage.removeItem('redirectAfterLogin');
-      navigate(redirectPath || '/');
+      
+      if (userRole === 'admin') {
+        console.log('User is admin, redirecting to /admin');
+        navigate('/admin');
+      } else {
+        console.log('User is not admin, redirecting to', redirectPath || '/');
+        navigate(redirectPath || '/');
+      }
     } catch (error) {
-      const errorMessage = handleApiError(error, navigate);
-      setLoginError(errorMessage);
+      console.log("Login error:", error);
+      
+      const errorResponse = error.response?.data;
+      const statusCode = error.response?.status;
+      const errorMessage = errorResponse?.message || errorResponse?.error || error.message;
+      
+      console.log("Error details:", { statusCode, errorMessage });
+      
+      // Xử lý lỗi 400 - Bad Request (thường là sai tài khoản/thông tin)
+      if (statusCode === 400) {
+        
+        // Đánh dấu email không hợp lệ để hiển thị viền đỏ
+        setValidation(prev => ({
+          ...prev,
+          email: {
+            isValid: false,
+            showError: true,
+            errorMessage: 'Account not found. Please check your email or create a new account.'
+          }
+        }));
+        
+        // Focus vào trường email để người dùng có thể sửa
+        if (emailInputRef.current) {
+          setTimeout(() => {
+            emailInputRef.current.focus();
+          }, 100);
+        }
+      }
+      // Xử lý lỗi mật khẩu không đúng (thường có status 401)
+      else if (statusCode === 401 || 
+          errorMessage?.includes('Password mismatch') || 
+          errorMessage?.includes('password') || 
+          errorMessage?.toLowerCase().includes('incorrect') ||
+          error.stack?.includes('Password mismatch')) {
+        
+        setLoginError('Incorrect password. Please try again.');
+        
+        if (passwordInputRef.current) {
+          setTimeout(() => {
+            passwordInputRef.current.focus();
+            setLoginData(prev => ({ ...prev, password: '' }));
+          }, 100);
+        }
+      } 
+      // Xử lý lỗi email không tồn tại
+      else if (errorMessage?.includes('User not found') || 
+               errorMessage?.includes('user not found') || 
+               errorMessage?.includes('no user')) {
+        // Đánh dấu email không hợp lệ để hiển thị viền đỏ
+        setValidation(prev => ({
+          ...prev,
+          email: {
+            isValid: false,
+            showError: true,
+            errorMessage: 'Email address not found. Please check or create an account.'
+          }
+        }));
+        
+        setLoginError('Email address not found. Please check your email or create an account.');
+        
+        if (emailInputRef.current) {
+          setTimeout(() => {
+            emailInputRef.current.focus();
+          }, 100);
+        }
+      } 
+      // Các lỗi khác
+      else {
+        setLoginError('An error occurred. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-4">
       {/* Email Field */}
-      <div className="relative">
-        <MailIcon />
-        <Input
-          id="email"
-          type="email"
-          name="email"
-          placeholder=" "
-          className={`peer w-full pl-10 pr-10 pt-7 pb-2 h-14 border rounded-md focus:outline-none focus:ring-2 transition-colors
-            ${focusedField === 'email' 
-              ? 'border-blue-500 focus:ring-blue-200' 
-              : validation.email.isValid && loginData.email
-                ? 'border-green-500 focus:ring-green-200'
-                : validation.email.showError
-                  ? 'border-red-500 focus:ring-red-200'
-                  : 'border-gray-200'
-            }`}
-          value={loginData.email}
-          onChange={handleChange}
-          onFocus={() => handleFocus('email')}
-          onBlur={() => handleBlur('email')}
-          required
-        />
-        <Label
-          htmlFor="email"
-          className={`absolute left-10 text-gray-400 transition-all duration-200
-            peer-placeholder-shown:text-base peer-placeholder-shown:top-4
-            peer-focus:top-2 peer-focus:text-xs
-            ${focusedField === 'email'
-              ? 'text-blue-500'
-              : validation.email.isValid && loginData.email
-                ? 'text-green-500'
-                : validation.email.showError
-                  ? 'text-red-500'
-                  : ''
-            }
-            top-2 text-xs`}
+      <div>
+        <label 
+          htmlFor="email" 
+          className="block text-sm font-medium text-gray-700 mb-1"
         >
-          Email address
-        </Label>
+          Email
+        </label>
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <Input
+            ref={emailInputRef}
+            id="email"
+            type="email"
+            name="email"
+            placeholder="name@example.com"
+            className={`w-full pl-10 pr-3 py-2 border ${
+              validation.email.showError 
+                ? 'border-red-500 focus:ring-red-200 focus:border-red-500' 
+                : 'border-gray-300 focus:ring-blue-200 focus:border-blue-500'
+            } rounded-md focus:outline-none focus:ring-2`}
+            value={loginData.email}
+            onChange={handleChange}
+            onBlur={() => handleBlur('email')}
+            required
+          />
+        </div>
         
-        {/* Show check icon when valid */}
-        {validation.email.isValid && !focusedField && loginData.email && (
-          <Check className="absolute right-3 top-4 h-5 w-5 text-green-500" />
+        {validation.email.showError && (
+          <div className="mt-1 text-red-500 text-sm">
+            <span>{validation.email.errorMessage || 'Please enter a valid email address'}</span>
+          </div>
         )}
       </div>
-      
-      {/* Email error message */}
-      {validation.email.showError && (
-        <div className="flex items-center space-x-2 -mt-1 text-red-500 text-sm bg-red-50 p-3 rounded-md border border-red-200">
-          <AlertCircle className="h-4 w-4" />
-          <span>Please include an '@' in the email address. 'aaaa' is missing an '@'.</span>
-        </div>
-      )}
 
       {/* Password Field */}
-      <div className="relative mt-6">
-        <LockIcon />
-        <Input
-          id="password"
-          type={showPassword ? "text" : "password"}
-          name="password"
-          placeholder=" "
-          className={`peer w-full pl-10 pr-10 pt-7 pb-2 h-14 border rounded-md focus:outline-none focus:ring-2 transition-colors
-            ${focusedField === 'password'
-              ? 'border-blue-500 focus:ring-blue-200'
-              : 'border-gray-200'
-            }`}
-          value={loginData.password}
-          onChange={handleChange}
-          onFocus={() => handleFocus('password')}
-          onBlur={() => handleBlur('password')}
-          required
-        />
-        <Label
-          htmlFor="password"
-          className={`absolute left-10 text-gray-400 transition-all duration-200
-            peer-placeholder-shown:text-base peer-placeholder-shown:top-4
-            peer-focus:top-2 peer-focus:text-xs
-            ${focusedField === 'password' ? 'text-blue-500' : ''}
-            top-2 text-xs`}
-        >
-          Password
-        </Label>
-        <button
-          type="button"
-          onClick={() => setShowPassword(!showPassword)}
-          className="absolute inset-y-0 right-0 pr-3 flex items-center"
-        >
-          {showPassword ? (
-            <EyeOff className="h-5 w-5 text-gray-400" />
-          ) : (
-            <Eye className="h-5 w-5 text-gray-400" />
-          )}
-        </button>
+      <div>
+        <div className="flex items-center justify-between mb-1">
+          <label 
+            htmlFor="password" 
+            className="block text-sm font-medium text-gray-700"
+          >
+            Password
+          </label>
+          <a 
+            href="#" 
+            className="text-sm text-blue-600 hover:underline"
+            onClick={(e) => {
+              e.preventDefault();
+              // Add forgot password logic
+            }}
+          >
+            Forgot password?
+          </a>
+        </div>
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+          <Input
+            ref={passwordInputRef}
+            id="password"
+            type={showPassword ? "text" : "password"}
+            name="password"
+            placeholder="••••••••"
+            className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={loginData.password}
+            onChange={handleChange}
+            required
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-500"
+          >
+            {showPassword ? (
+              <EyeOff className="h-5 w-5" />
+            ) : (
+              <Eye className="h-5 w-5" />
+            )}
+          </button>
+        </div>
       </div>
 
-      {/* Remember Me and Forgot Password */}
-      <div className="flex items-center justify-between text-sm">
-        <div className="flex items-center">
-          <input
-            type="checkbox"
-            id="remember"
-            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-          />
-          <label htmlFor="remember" className="ml-2 text-gray-600">
-            Remember me
-          </label>
-        </div>
-        <Button
-          variant="link"
-          className="text-blue-600 hover:text-blue-500"
-          onClick={(e) => {
-            e.preventDefault();
-            // Add forgot password logic
-          }}
-        >
-          Forgot password?
-        </Button>
+      {/* Remember Me */}
+      <div className="flex items-center">
+        <input
+          type="checkbox"
+          id="remember"
+          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+        />
+        <label htmlFor="remember" className="ml-2 text-sm text-gray-600">
+          Remember me for 30 days
+        </label>
       </div>
 
       {/* Error Display */}
       {loginError && (
-        <div className="flex items-center space-x-2 text-red-600 text-sm bg-red-50 p-3 rounded-md">
+        <div className="mt-2 text-red-600 text-sm p-2">
           <span>{loginError}</span>
         </div>
       )}
@@ -275,17 +280,10 @@ const Login = () => {
       {/* Submit Button */}
       <Button
         type="submit"
-        className="w-full"
+        className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md"
         disabled={isLoading}
       >
-        {isLoading ? (
-          <>
-            <span className="animate-spin mr-2">⌛</span>
-            Signing in...
-          </>
-        ) : (
-          'Sign in'
-        )}
+        {isLoading ? "Signing in..." : "Sign in"}
       </Button>
     </form>
   );

@@ -52,17 +52,19 @@ const Header = () => {
     setIsProfileDropdownOpen(false);
     setIsMenuOpen(false);
     
+    // Đặt biến global để báo hiệu các component khác dừng animations
+    window.isUnmounting = true;
+    
     // Xóa dữ liệu đăng nhập
     localStorage.removeItem('token');
     localStorage.removeItem('role');
     localStorage.removeItem('userData');
     setIsLoggedIn(false);
     
-    // Đợi một chút để các animation kết thúc
-    // trước khi chuyển hướng
+    // Đợi một chút để các animation kết thúc và components có thể dừng
     setTimeout(() => {
       navigate('/login');
-    }, 10);
+    }, 50); // Tăng timeout lên một chút để đảm bảo animations có thời gian dừng
   };
 
   const toggleMenu = () => {

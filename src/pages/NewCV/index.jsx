@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Plus, Check,Save } from 'lucide-react';
+import { ArrowLeft, Plus, Check, Save } from 'lucide-react';
 import { HiArrowTopRightOnSquare } from "react-icons/hi2";
 import {
   PersonalInfoStep,
@@ -26,19 +26,10 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import api, { handleApiError, callApi } from '../../utils/api';
 import CVSaveConfirmation from '../../components/CVSaveConfirmation';
+import { getDefaultTemplate, getTemplateById } from '../../templates';
 
-const mainSteps = [
-  { number: 1, name: 'Personal' },
-  { number: 2, name: 'Summary' },
-  { number: 3, name: 'Experience' },
-  { number: 4, name: 'Education' },
-  { number: 5, name: 'Skills' },
-  { number: 6, name: 'Additional Sections' },
-  { number: 7, name: 'Review' }
-];
 
 const NewCV = () => {
-  const [templates, setTemplates] = useState([]);
   const [error, setError] = useState(null);
   const [resumeId, setResumeId] = useState(null);
   const [generating, setGenerating] = useState(false);
@@ -67,6 +58,7 @@ const NewCV = () => {
       website: '',
       linkedin: ''
     },
+    template: { id: getDefaultTemplate().id },
     summary: '',
     education: [],
     experience: [],
@@ -109,16 +101,57 @@ const NewCV = () => {
   // Thêm state để quản lý các lỗi từng trường
   const [validationErrors, setValidationErrors] = useState({});
 
-  // Định nghĩa các bước chính (thay đổi thành tabs)
-  const mainSteps = [
-    { number: 1, name: 'Personal' },
-    { number: 2, name: 'Summary' },
-    { number: 3, name: 'Experience' },
-    { number: 4, name: 'Education' },
-    { number: 5, name: 'Skills' },
-    { number: 6, name: 'Additional Sections' },
-    { number: 7, name: 'Review' }
-  ];
+  // Kiểm tra xem có dữ liệu được truyền từ trang upload không
+  const extractedData = location.state?.extractedData;
+  const fromUpload = location.state?.fromUpload;
+  
+  // Khởi tạo state với dữ liệu từ extractedData nếu có
+  const [cvData, setCvData] = useState(() => {
+    if (fromUpload && extractedData) {
+      return {
+        personalInfo: extractedData.personalInfo || {
+          firstName: '',
+          lastName: '',
+          email: '',
+          phone: '',
+          location: '',
+          country: '',
+          website: '',
+          linkedin: ''
+        },
+        summary: extractedData.summary || '',
+        experience: extractedData.experience || [],
+        education: extractedData.education || [],
+        skills: extractedData.skills || [],
+        projects: extractedData.projects || [],
+        certifications: extractedData.certifications || [],
+        languages: extractedData.languages || []
+      };
+    } else {
+      return {
+        // ... your default state here ...
+        personalInfo: {
+          firstName: '',
+          lastName: '',
+          email: '',
+          phone: '',
+          location: '',
+          country: '',
+          website: '',
+          linkedin: ''
+        },
+        summary: '',
+        experience: [],
+        education: [],
+        skills: [],
+        projects: [],
+        certifications: [],
+        languages: []
+      };
+    }
+  });
+
+
 
   // Định nghĩa các section phụ
   const additionalSections = [
@@ -225,7 +258,7 @@ const NewCV = () => {
       setIsEditing(true);
       
       // Fetch dữ liệu CV hiện có từ API
-      const token = localStorage.getItem('authToken');
+      const token = localStorage.getItem('token');
       const apiUrl = `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/cv/${location.state.cvId}`;
       
       fetch(apiUrl, {
@@ -240,7 +273,19 @@ const NewCV = () => {
       })
       .then(data => {
         // Cập nhật formData với dữ liệu từ server
-        setFormData(data.data);
+        // Đảm bảo template ID hợp lệ
+        const template = data.data.template || { id: getDefaultTemplate().id };
+        
+        // Kiểm tra xem template ID từ server có tồn tại trong hệ thống không
+        const validTemplate = getTemplateById(template.id);
+        if (!validTemplate) {
+          template.id = getDefaultTemplate().id;
+        }
+        
+        setFormData({
+          ...data.data,
+          template: template
+        });
       })
       .catch(error => {
         console.error('Error fetching CV:', error);
@@ -261,9 +306,17 @@ const NewCV = () => {
     // Hiển thị trạng thái đang xử lý
     setIsSubmitting(true);
     
+    // Lấy thông tin template từ formData
+    const templateId = formData.template?.id || getDefaultTemplate().id;
+    const templateInfo = getTemplateById(templateId);
+    
     // Format dữ liệu theo đúng cấu trúc API yêu cầu
     const formattedData = {
       name: finalName,
+      template: {
+        id: templateId,
+        name: templateInfo.name
+      },
       personalInfo: formData.personalInfo,
       summary: formData.summary,
       education: formData.education,
@@ -295,13 +348,17 @@ const NewCV = () => {
         return;
       }
       
-      // URL của API endpoint
-      const apiUrl = 'http://localhost:5000/api/cv';
-      console.log('Saving CV to API:', apiUrl);
+      // Xác định phương thức và URL API dựa vào việc đang chỉnh sửa hay tạo mới
+      const method = isEditing ? 'PUT' : 'POST';
+      const apiUrl = isEditing 
+        ? `http://localhost:5000/api/cv/${cvId}`
+        : 'http://localhost:5000/api/cv';
+      
+      console.log(`${isEditing ? 'Updating' : 'Saving'} CV to API:`, apiUrl);
       
       // Gọi API để lưu CV
       fetch(apiUrl, {
-        method: 'POST',
+        method: method,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
@@ -531,6 +588,17 @@ const NewCV = () => {
     setShowFullPagePreview(!showFullPagePreview);
   };
 
+  // Thêm hàm xử lý chọn template
+  const handleTemplateChange = (templateId) => {
+    // Đóng modal trước
+    setShowFullPagePreview(false);
+    
+    // Nếu nhận templateId, cập nhật template trong formData
+    if (templateId) {
+      updateFormData('template', { id: templateId });
+    }
+  };
+
   // Thêm useEffect để xử lý dữ liệu từ document upload
   useEffect(() => {
     // Kiểm tra nếu có dữ liệu được truyền từ trang upload
@@ -555,17 +623,6 @@ const NewCV = () => {
     console.log(message);
     // Ví dụ: toast(message) nếu dùng react-toastify
   };
-
-  // Sửa các hàm gọi API
-  const fetchTemplates = async () => {
-    try {
-      const response = await api.get('/templates');
-      setTemplates(response.data);
-    } catch (error) {
-      const errorMessage = handleApiError(error, navigate);
-      setError(errorMessage);
-    }
-  }
 
   const saveResume = async () => {
     try {
@@ -597,10 +654,6 @@ const NewCV = () => {
       setGenerating(false);
     }
   }
-
-  useEffect(() => {
-    fetchTemplates();
-  }, []);
 
   // Thêm hàm xử lý khi đóng popup xác nhận
   const handleCloseSaveConfirmation = () => {
@@ -673,6 +726,32 @@ const NewCV = () => {
     // Chuyển đến tab Personal và giữ lỗi validation để hiển thị
     goToStep(1);
   };
+
+  // Hiển thị thông báo khi có dữ liệu được trích xuất
+  useEffect(() => {
+    if (fromUpload && extractedData) {
+      // Xóa state sau khi đã sử dụng để tránh duplicate nếu trang được refresh
+      navigate('/new-cv', { replace: true });
+    }
+  }, []);
+
+  // Thêm effect để kiểm soát scroll của trang khi modal đang mở
+  useEffect(() => {
+    // Kiểm tra nếu bất kỳ modal nào đang mở
+    const isAnyModalOpen = showFullPagePreview || showNameModal || showSaveConfirmation || showConfirmationDialog;
+    
+    // Thêm hoặc xóa class để vô hiệu hóa scroll
+    if (isAnyModalOpen) {
+      document.body.style.overflow = 'hidden'; // Ẩn thanh scroll và ngăn cuộn trang
+    } else {
+      document.body.style.overflow = ''; // Khôi phục scroll mặc định
+    }
+    
+    // Cleanup khi component unmount
+    return () => {
+      document.body.style.overflow = ''; // Đảm bảo khôi phục scroll khi thoát trang
+    };
+  }, [showFullPagePreview, showNameModal, showSaveConfirmation, showConfirmationDialog]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -821,7 +900,7 @@ const NewCV = () => {
             
             {/* Main Form */}
             <div className="md:w-3/8 flex-1">
-              <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+              <div className="bg-white rounded-lg shadow-md p-6 mb-6 scrollable">
                 {renderStep()}
               </div>
               <div className="pb-20"></div>
@@ -840,7 +919,7 @@ const NewCV = () => {
                     <HiArrowTopRightOnSquare size={20} />
                   </button>
                 </div>
-                <div className="max-h-[calc(100vh-150px)] overflow-y-auto cv-wrapper">
+                <div className="max-h-[calc(100vh-150px)] overflow-y-auto scrollable cv-wrapper">
                   <div className="w-full cv-wrapper">
                     <CVPreview formData={formData} />
                   </div>
@@ -876,7 +955,7 @@ const NewCV = () => {
       {/* Các modal khác */}
       <CVPreviewModal 
         isOpen={showFullPagePreview}
-        onClose={toggleFullPagePreview}
+        onClose={handleTemplateChange}
         formData={formData}
       />
       
@@ -898,12 +977,14 @@ const NewCV = () => {
             <p className="text-gray-600 mb-2">
               Some required information is missing or invalid:
             </p>
-            <ul className="list-disc pl-5 text-gray-600 mb-5">
-              {validationErrors.firstName && <li>First Name is required</li>}
-              {validationErrors.lastName && <li>Last Name is required</li>}
-              {validationErrors.email && <li>Email {validationErrors.email.includes('invalid') ? 'is invalid' : 'is required'}</li>}
-              {validationErrors.headline && <li>Professional headline is required</li>}
-            </ul>
+            <div className="max-h-60 overflow-y-auto scrollable">
+              <ul className="list-disc pl-5 text-gray-600 mb-5">
+                {validationErrors.firstName && <li>First Name is required</li>}
+                {validationErrors.lastName && <li>Last Name is required</li>}
+                {validationErrors.email && <li>Email {validationErrors.email.includes('invalid') ? 'is invalid' : 'is required'}</li>}
+                {validationErrors.headline && <li>Professional headline is required</li>}
+              </ul>
+            </div>
             <p className="text-gray-600 mb-5">Do you still want to save this CV?</p>
             <div className="flex justify-end space-x-3">
               <button

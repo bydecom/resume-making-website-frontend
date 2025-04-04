@@ -151,7 +151,7 @@ const CVSaveConfirmation = ({ isOpen, onClose, onSave, cvData }) => {
                   <button className="px-4 py-2 text-gray-500 hover:text-gray-700">Tips</button>
                 </div>
                 
-                <div className="py-2 max-h-[300px] overflow-y-auto">
+                <div className="py-2 max-h-[300px] overflow-y-auto scrollable">
                   <ul className="space-y-2">
                     {assessment.strengths.length > 0 ? (
                       assessment.strengths.map((strength, index) => (
@@ -208,7 +208,7 @@ const CVSaveConfirmation = ({ isOpen, onClose, onSave, cvData }) => {
                 </div>
               </div>
 
-              <div className="h-[400px] p-6 overflow-y-auto">
+              <div className="h-[400px] p-6 overflow-y-auto scrollable">
                 {/* Summary Section */}
                 {cvData.summary && (
                   <div className="mb-6">

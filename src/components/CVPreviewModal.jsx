@@ -2,22 +2,15 @@ import React, { useState } from 'react';
 import CVPreview from '../pages/NewCV/components/CVPreview';
 import { FaExchangeAlt, FaLightbulb } from 'react-icons/fa';
 import '../pages/NewCV/lib/input-styles.css';
+import { templates, getTemplateById } from '../templates';
 
 const CVPreviewModal = ({ 
   isOpen, 
   onClose, 
   formData
 }) => {
-  const [selectedTemplate, setSelectedTemplate] = useState('template1');
-  
-  // Danh sách các template mẫu
-  const templates = [
-    { id: 'template1', name: 'Professional' },
-    { id: 'template2', name: 'Modern' },
-    { id: 'template3', name: 'Creative' },
-    { id: 'template4', name: 'Simple' },
-    { id: 'template5', name: 'Elegant' }
-  ];
+  const initialTemplateId = formData.template?.id || Object.keys(templates)[0];
+  const [selectedTemplateId, setSelectedTemplateId] = useState(initialTemplateId);
   
   // Danh sách các lời khuyên
   const tips = [
@@ -33,13 +26,30 @@ const CVPreviewModal = ({
 
   if (!isOpen) return null;
 
+  // Tạo bản sao của formData với template được chọn
+  const previewData = {
+    ...formData,
+    template: { id: selectedTemplateId }
+  };
+
+  // Áp dụng template được chọn vào formData chính
+  const applyTemplate = () => {
+    // Truyền template được chọn trở lại phần call back
+    onClose(selectedTemplateId);
+  };
+
+  // Đóng modal mà không áp dụng template
+  const handleClose = () => {
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-xl w-full h-full max-w-[95vw] max-h-[95vh] overflow-hidden flex flex-col">
         <div className="p-4 border-b flex justify-between items-center">
           <h2 className="text-xl font-semibold">CV Preview</h2>
           <button 
-            onClick={onClose}
+            onClick={handleClose}
             className="text-gray-500 hover:text-gray-700"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -50,47 +60,50 @@ const CVPreviewModal = ({
         
         <div className="flex-grow overflow-auto flex">
           {/* Left sidebar - Template Selection - 1/4 width */}
-          <div className="w-1/4 border-r p-4 overflow-y-auto">
+          <div className="w-1/4 border-r p-4 overflow-y-auto scrollable">
             <div className="flex items-center mb-4">
               <FaExchangeAlt className="text-blue-600 mr-2" />
               <h3 className="text-lg font-medium">Choose Template</h3>
             </div>
             
             <div className="space-y-3">
-              {templates.map(template => (
+              {Object.values(templates).map(template => (
                 <div 
                   key={template.id}
                   className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                    selectedTemplate === template.id 
+                    selectedTemplateId === template.id 
                       ? 'border-blue-500 bg-blue-50' 
                       : 'border-gray-200 hover:border-blue-300'
                   }`}
-                  onClick={() => setSelectedTemplate(template.id)}
+                  onClick={() => setSelectedTemplateId(template.id)}
                 >
                   <div className="font-medium">{template.name}</div>
                   <div className="text-xs text-gray-500 mt-1">
-                    Click to preview this template
+                    {template.description}
                   </div>
                 </div>
               ))}
             </div>
             
             <div className="mt-6">
-              <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
+              <button 
+                className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+                onClick={applyTemplate}
+              >
                 Apply Template
               </button>
             </div>
           </div>
           
           {/* Middle section - CV Preview - 2/4 width */}
-          <div className="w-2/4 p-4 overflow-y-auto flex justify-center bg-gray-50">
+          <div className="w-2/4 p-4 overflow-y-auto scrollable flex justify-center bg-gray-50">
             <div className="max-w-[600px] w-full bg-white shadow-md rounded-lg overflow-hidden cv-wrapper">
-              <CVPreview formData={formData} />
+              <CVPreview formData={previewData} />
             </div>
           </div>
           
           {/* Right sidebar - CV Tips - 1/4 width */}
-          <div className="w-1/4 border-l p-4 overflow-y-auto">
+          <div className="w-1/4 border-l p-4 overflow-y-auto scrollable">
             <div className="flex items-center mb-4">
               <FaLightbulb className="text-yellow-500 mr-2" />
               <h3 className="text-lg font-medium">CV Tips</h3>
@@ -115,15 +128,16 @@ const CVPreviewModal = ({
         
         <div className="border-t p-4 flex justify-between">
           <button 
-            onClick={onClose}
+            onClick={handleClose}
             className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
           >
             Close
           </button>
           <button 
+            onClick={applyTemplate}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
           >
-            Download CV
+            Apply Template
           </button>
         </div>
       </div>

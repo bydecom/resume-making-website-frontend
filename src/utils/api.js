@@ -25,7 +25,15 @@ api.interceptors.response.use(
     
     // Xử lý lỗi 401 (Unauthorized)
     if (error.response?.status === 401) {
-      // Xóa dữ liệu xác thực
+      // Kiểm tra xem đây có phải là lỗi từ endpoint đăng nhập không
+      const isLoginEndpoint = error.config.url.includes('/api/users/login');
+      
+      // Nếu là endpoint đăng nhập - để Login.jsx xử lý lỗi
+      if (isLoginEndpoint) {
+        return Promise.reject(error);
+      }
+      
+      // Nếu không phải endpoint đăng nhập, xem như là token hết hạn
       localStorage.removeItem('token');
       localStorage.removeItem('authToken');
       localStorage.removeItem('userId');

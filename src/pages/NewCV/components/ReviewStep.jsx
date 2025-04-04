@@ -123,14 +123,14 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                 <input
                   ref={inputRef}
                   type="text"
-                  className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-full overflow-x-auto"
                   value={localFormData.personalInfo?.firstName || ''}
                   onChange={(e) => handleInputChange('personalInfo.firstName', e.target.value)}
                   onBlur={handleBlur}
                 />
               ) : (
                 <p 
-                  className="text-gray-800 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
+                  className="text-gray-800 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors break-words"
                   onClick={() => handleEditClick('personalInfo.firstName')}
                 >
                   {localFormData.personalInfo?.firstName || '(Not specified)'}
@@ -144,14 +144,14 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                 <input
                   ref={inputRef}
                   type="text"
-                  className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-full overflow-x-auto"
                   value={localFormData.personalInfo?.lastName || ''}
                   onChange={(e) => handleInputChange('personalInfo.lastName', e.target.value)}
                   onBlur={handleBlur}
                 />
               ) : (
                 <p 
-                  className="text-gray-800 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
+                  className="text-gray-800 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors break-words"
                   onClick={() => handleEditClick('personalInfo.lastName')}
                 >
                   {localFormData.personalInfo?.lastName || '(Not specified)'}
@@ -165,14 +165,14 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                 <input
                   ref={inputRef}
                   type="text"
-                  className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-full overflow-x-auto"
                   value={localFormData.personalInfo?.email || ''}
                   onChange={(e) => handleInputChange('personalInfo.email', e.target.value)}
                   onBlur={handleBlur}
                 />
               ) : (
                 <p 
-                  className="text-gray-800 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
+                  className="text-gray-800 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors break-words"
                   onClick={() => handleEditClick('personalInfo.email')}
                 >
                   {localFormData.personalInfo?.email || '(Not specified)'}
@@ -186,14 +186,14 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                 <input
                   ref={inputRef}
                   type="text"
-                  className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-full overflow-x-auto"
                   value={localFormData.personalInfo?.phone || ''}
                   onChange={(e) => handleInputChange('personalInfo.phone', e.target.value)}
                   onBlur={handleBlur}
                 />
               ) : (
                 <p 
-                  className="text-gray-800 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
+                  className="text-gray-800 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors break-words"
                   onClick={() => handleEditClick('personalInfo.phone')}
                 >
                   {localFormData.personalInfo?.phone || '(Not specified)'}
@@ -207,14 +207,14 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                 <input
                   ref={inputRef}
                   type="text"
-                  className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-full overflow-x-auto"
                   value={localFormData.personalInfo?.location || ''}
                   onChange={(e) => handleInputChange('personalInfo.location', e.target.value)}
                   onBlur={handleBlur}
                 />
               ) : (
                 <p 
-                  className="text-gray-800 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
+                  className="text-gray-800 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors break-words"
                   onClick={() => handleEditClick('personalInfo.location')}
                 >
                   {localFormData.personalInfo?.location || '(Not specified)'}
@@ -228,14 +228,14 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                 <input
                   ref={inputRef}
                   type="text"
-                  className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-full overflow-x-auto"
                   value={localFormData.personalInfo?.country || ''}
                   onChange={(e) => handleInputChange('personalInfo.country', e.target.value)}
                   onBlur={handleBlur}
                 />
               ) : (
                 <p 
-                  className="text-gray-800 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
+                  className="text-gray-800 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors break-words"
                   onClick={() => handleEditClick('personalInfo.country')}
                 >
                   {localFormData.personalInfo?.country || '(Not specified)'}
@@ -249,14 +249,14 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                 <input
                   ref={inputRef}
                   type="text"
-                  className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-full overflow-x-auto"
                   value={localFormData.personalInfo?.headline || ''}
                   onChange={(e) => handleInputChange('personalInfo.headline', e.target.value)}
                   onBlur={handleBlur}
                 />
               ) : (
                 <p 
-                  className="text-gray-800 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
+                  className="text-gray-800 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors break-words"
                   onClick={() => handleEditClick('personalInfo.headline')}
                 >
                   {localFormData.personalInfo?.headline || '(Not specified)'}
@@ -270,14 +270,14 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                 <input
                   ref={inputRef}
                   type="text"
-                  className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-full overflow-x-auto"
                   value={localFormData.personalInfo?.website || ''}
                   onChange={(e) => handleInputChange('personalInfo.website', e.target.value)}
                   onBlur={handleBlur}
                 />
               ) : (
                 <p 
-                  className="text-gray-800 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
+                  className="text-gray-800 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors break-words"
                   onClick={() => handleEditClick('personalInfo.website')}
                 >
                   {localFormData.personalInfo?.website || '(Not specified)'}
@@ -291,14 +291,14 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                 <input
                   ref={inputRef}
                   type="text"
-                  className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-full overflow-x-auto"
                   value={localFormData.personalInfo?.linkedin || ''}
                   onChange={(e) => handleInputChange('personalInfo.linkedin', e.target.value)}
                   onBlur={handleBlur}
                 />
               ) : (
                 <p 
-                  className="text-gray-800 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
+                  className="text-gray-800 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors break-words"
                   onClick={() => handleEditClick('personalInfo.linkedin')}
                 >
                   {localFormData.personalInfo?.linkedin || '(Not specified)'}
@@ -319,7 +319,7 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
               {editingField === 'summary' ? (
                 <textarea
                   ref={inputRef}
-                  className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 cv-textarea max-w-full overflow-x-auto"
                   value={localFormData.summary || ''}
                   onChange={(e) => handleInputChange('summary', e.target.value)}
                   onBlur={handleBlur}
@@ -353,14 +353,14 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                       <input
                         ref={inputRef}
                         type="text"
-                        className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-full overflow-x-auto"
                         value={exp.position || ''}
                         onChange={(e) => handleInputChange(`experience.${index}.position`, e.target.value)}
                         onBlur={handleBlur}
                       />
                     ) : (
                       <p 
-                        className="font-medium text-gray-800 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
+                        className="font-medium text-gray-800 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors break-words"
                         onClick={() => handleEditClick(`experience.${index}.position`)}
                       >
                         {exp.position || '(Not specified)'}
@@ -374,14 +374,14 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                       <input
                         ref={inputRef}
                         type="text"
-                        className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-full overflow-x-auto"
                         value={exp.company || ''}
                         onChange={(e) => handleInputChange(`experience.${index}.company`, e.target.value)}
                         onBlur={handleBlur}
                       />
                     ) : (
                       <p 
-                        className="text-gray-600 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
+                        className="text-gray-600 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors break-words"
                         onClick={() => handleEditClick(`experience.${index}.company`)}
                       >
                         {exp.company || '(Not specified)'}
@@ -394,7 +394,7 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                     {editingField === `experience.${index}.description` ? (
                       <textarea
                         ref={inputRef}
-                        className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 cv-textarea max-w-full overflow-x-auto"
                         value={exp.description || ''}
                         onChange={(e) => handleInputChange(`experience.${index}.description`, e.target.value)}
                         onBlur={handleBlur}
@@ -402,7 +402,7 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                       />
                     ) : (
                       <p 
-                        className="mt-1 text-gray-700 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
+                        className="mt-1 text-gray-700 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors break-words"
                         onClick={() => handleEditClick(`experience.${index}.description`)}
                       >
                         {exp.description || '(No description provided)'}
@@ -430,7 +430,7 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                     <input
                       ref={inputRef}
                       type="text"
-                      className="border border-gray-300 rounded-full px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="border border-gray-300 rounded-full px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-full overflow-x-auto"
                       value={skill}
                       onChange={(e) => handleInputChange(`skills.${index}`, e.target.value)}
                       onBlur={handleBlur}
@@ -438,7 +438,7 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                     />
                   ) : (
                     <span 
-                      className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full cursor-pointer hover:bg-gray-200 transition-colors"
+                      className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full cursor-pointer hover:bg-gray-200 transition-colors break-words"
                       onClick={() => handleEditClick(`skills.${index}`)}
                     >
                       {skill}
@@ -466,14 +466,14 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                       <input
                         ref={inputRef}
                         type="text"
-                        className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-full overflow-x-auto"
                         value={edu.institution || ''}
                         onChange={(e) => handleInputChange(`education.${index}.institution`, e.target.value)}
                         onBlur={handleBlur}
                       />
                     ) : (
                       <p 
-                        className="font-medium text-gray-800 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
+                        className="font-medium text-gray-800 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors break-words"
                         onClick={() => handleEditClick(`education.${index}.institution`)}
                       >
                         {edu.institution || '(Not specified)'}
@@ -487,14 +487,14 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                       <input
                         ref={inputRef}
                         type="text"
-                        className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-full overflow-x-auto"
                         value={edu.degree || ''}
                         onChange={(e) => handleInputChange(`education.${index}.degree`, e.target.value)}
                         onBlur={handleBlur}
                       />
                     ) : (
                       <p 
-                        className="text-gray-600 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
+                        className="text-gray-600 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors break-words"
                         onClick={() => handleEditClick(`education.${index}.degree`)}
                       >
                         {edu.degree || '(Not specified)'}
@@ -508,14 +508,14 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                       <input
                         ref={inputRef}
                         type="text"
-                        className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-full overflow-x-auto"
                         value={edu.field || ''}
                         onChange={(e) => handleInputChange(`education.${index}.field`, e.target.value)}
                         onBlur={handleBlur}
                       />
                     ) : (
                       <p 
-                        className="text-gray-600 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
+                        className="text-gray-600 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors break-words"
                         onClick={() => handleEditClick(`education.${index}.field`)}
                       >
                         {edu.field || '(Not specified)'}
@@ -530,14 +530,14 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                         <input
                           ref={inputRef}
                           type="date"
-                          className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-full overflow-x-auto"
                           value={edu.startDate || ''}
                           onChange={(e) => handleInputChange(`education.${index}.startDate`, e.target.value)}
                           onBlur={handleBlur}
                         />
                       ) : (
                         <p 
-                          className="text-gray-600 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
+                          className="text-gray-600 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors break-words"
                           onClick={() => handleEditClick(`education.${index}.startDate`)}
                         >
                           {edu.startDate ? formatDate(edu.startDate) : '(Not specified)'}
@@ -551,7 +551,7 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                         <input
                           ref={inputRef}
                           type="date"
-                          className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-full overflow-x-auto"
                           value={edu.endDate || ''}
                           onChange={(e) => handleInputChange(`education.${index}.endDate`, e.target.value)}
                           onBlur={handleBlur}
@@ -559,7 +559,7 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                         />
                       ) : (
                         <p 
-                          className="text-gray-600 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
+                          className="text-gray-600 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors break-words"
                           onClick={() => handleEditClick(`education.${index}.endDate`)}
                         >
                           {edu.isPresent ? 'Present' : (edu.endDate ? formatDate(edu.endDate) : '(Not specified)')}
@@ -573,7 +573,7 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                     {editingField === `education.${index}.description` ? (
                       <textarea
                         ref={inputRef}
-                        className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 cv-textarea max-w-full overflow-x-auto"
                         value={edu.description || ''}
                         onChange={(e) => handleInputChange(`education.${index}.description`, e.target.value)}
                         onBlur={handleBlur}
@@ -581,7 +581,7 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                       />
                     ) : (
                       <p 
-                        className="mt-1 text-gray-700 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
+                        className="mt-1 text-gray-700 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors break-words"
                         onClick={() => handleEditClick(`education.${index}.description`)}
                       >
                         {edu.description || '(No description provided)'}
@@ -609,14 +609,14 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                       <input
                         ref={inputRef}
                         type="text"
-                        className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-full overflow-x-auto"
                         value={project.title || ''}
                         onChange={(e) => handleInputChange(`projects.${index}.title`, e.target.value)}
                         onBlur={handleBlur}
                       />
                     ) : (
                       <p 
-                        className="font-medium text-gray-800 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
+                        className="font-medium text-gray-800 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors break-words"
                         onClick={() => handleEditClick(`projects.${index}.title`)}
                       >
                         {project.title || '(Not specified)'}
@@ -630,14 +630,14 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                       <input
                         ref={inputRef}
                         type="text"
-                        className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-full overflow-x-auto"
                         value={project.role || ''}
                         onChange={(e) => handleInputChange(`projects.${index}.role`, e.target.value)}
                         onBlur={handleBlur}
                       />
                     ) : (
                       <p 
-                        className="text-gray-600 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
+                        className="text-gray-600 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors break-words"
                         onClick={() => handleEditClick(`projects.${index}.role`)}
                       >
                         {project.role || '(Not specified)'}
@@ -652,14 +652,14 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                         <input
                           ref={inputRef}
                           type="date"
-                          className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-full overflow-x-auto"
                           value={project.startDate || ''}
                           onChange={(e) => handleInputChange(`projects.${index}.startDate`, e.target.value)}
                           onBlur={handleBlur}
                         />
                       ) : (
                         <p 
-                          className="text-gray-600 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
+                          className="text-gray-600 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors break-words"
                           onClick={() => handleEditClick(`projects.${index}.startDate`)}
                         >
                           {project.startDate ? formatDate(project.startDate) : '(Not specified)'}
@@ -673,7 +673,7 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                         <input
                           ref={inputRef}
                           type="date"
-                          className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-full overflow-x-auto"
                           value={project.endDate || ''}
                           onChange={(e) => handleInputChange(`projects.${index}.endDate`, e.target.value)}
                           onBlur={handleBlur}
@@ -681,7 +681,7 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                         />
                       ) : (
                         <p 
-                          className="text-gray-600 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
+                          className="text-gray-600 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors break-words"
                           onClick={() => handleEditClick(`projects.${index}.endDate`)}
                         >
                           {project.isPresent ? 'Present' : (project.endDate ? formatDate(project.endDate) : '(Not specified)')}
@@ -695,7 +695,7 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                     {editingField === `projects.${index}.description` ? (
                       <textarea
                         ref={inputRef}
-                        className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 cv-textarea max-w-full overflow-x-auto"
                         value={project.description || ''}
                         onChange={(e) => handleInputChange(`projects.${index}.description`, e.target.value)}
                         onBlur={handleBlur}
@@ -703,7 +703,7 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                       />
                     ) : (
                       <p 
-                        className="mt-1 text-gray-700 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
+                        className="mt-1 text-gray-700 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors break-words"
                         onClick={() => handleEditClick(`projects.${index}.description`)}
                       >
                         {project.description || '(No description provided)'}
@@ -717,14 +717,14 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                       <input
                         ref={inputRef}
                         type="url"
-                        className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-full overflow-x-auto"
                         value={project.url || ''}
                         onChange={(e) => handleInputChange(`projects.${index}.url`, e.target.value)}
                         onBlur={handleBlur}
                       />
                     ) : (
                       <p 
-                        className="text-blue-600 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
+                        className="text-blue-600 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors break-words"
                         onClick={() => handleEditClick(`projects.${index}.url`)}
                       >
                         {project.url || '(No URL provided)'}
@@ -752,14 +752,14 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                       <input
                         ref={inputRef}
                         type="text"
-                        className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-full overflow-x-auto"
                         value={cert.name || ''}
                         onChange={(e) => handleInputChange(`certifications.${index}.name`, e.target.value)}
                         onBlur={handleBlur}
                       />
                     ) : (
                       <p 
-                        className="font-medium text-gray-800 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
+                        className="font-medium text-gray-800 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors break-words"
                         onClick={() => handleEditClick(`certifications.${index}.name`)}
                       >
                         {cert.name || '(Not specified)'}
@@ -773,14 +773,14 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                       <input
                         ref={inputRef}
                         type="text"
-                        className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-full overflow-x-auto"
                         value={cert.issuer || ''}
                         onChange={(e) => handleInputChange(`certifications.${index}.issuer`, e.target.value)}
                         onBlur={handleBlur}
                       />
                     ) : (
                       <p 
-                        className="text-gray-600 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
+                        className="text-gray-600 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors break-words"
                         onClick={() => handleEditClick(`certifications.${index}.issuer`)}
                       >
                         {cert.issuer || '(Not specified)'}
@@ -795,14 +795,14 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                         <input
                           ref={inputRef}
                           type="date"
-                          className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-full overflow-x-auto"
                           value={cert.issueDate || ''}
                           onChange={(e) => handleInputChange(`certifications.${index}.issueDate`, e.target.value)}
                           onBlur={handleBlur}
                         />
                       ) : (
                         <p 
-                          className="text-gray-600 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
+                          className="text-gray-600 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors break-words"
                           onClick={() => handleEditClick(`certifications.${index}.issueDate`)}
                         >
                           {cert.issueDate ? formatDate(cert.issueDate) : '(Not specified)'}
@@ -816,7 +816,7 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                         <input
                           ref={inputRef}
                           type="date"
-                          className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-full overflow-x-auto"
                           value={cert.expirationDate || ''}
                           onChange={(e) => handleInputChange(`certifications.${index}.expirationDate`, e.target.value)}
                           onBlur={handleBlur}
@@ -824,7 +824,7 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                         />
                       ) : (
                         <p 
-                          className="text-gray-600 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
+                          className="text-gray-600 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors break-words"
                           onClick={() => handleEditClick(`certifications.${index}.expirationDate`)}
                         >
                           {cert.doesNotExpire ? 'No Expiration' : (cert.expirationDate ? formatDate(cert.expirationDate) : '(Not specified)')}
@@ -839,14 +839,14 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                       <input
                         ref={inputRef}
                         type="url"
-                        className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-full overflow-x-auto"
                         value={cert.credentialURL || ''}
                         onChange={(e) => handleInputChange(`certifications.${index}.credentialURL`, e.target.value)}
                         onBlur={handleBlur}
                       />
                     ) : (
                       <p 
-                        className="text-blue-600 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
+                        className="text-blue-600 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors break-words"
                         onClick={() => handleEditClick(`certifications.${index}.credentialURL`)}
                       >
                         {cert.credentialURL || '(No URL provided)'}
@@ -875,14 +875,14 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                         <input
                           ref={inputRef}
                           type="text"
-                          className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-full overflow-x-auto"
                           value={lang.language || ''}
                           onChange={(e) => handleInputChange(`languages.${index}.language`, e.target.value)}
                           onBlur={handleBlur}
                         />
                       ) : (
                         <p 
-                          className="font-medium text-gray-800 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
+                          className="font-medium text-gray-800 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors break-words"
                           onClick={() => handleEditClick(`languages.${index}.language`)}
                         >
                           {lang.language || '(Not specified)'}
@@ -895,7 +895,7 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                       {editingField === `languages.${index}.proficiency` ? (
                         <select
                           ref={inputRef}
-                          className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-full overflow-x-auto"
                           value={lang.proficiency || 'Beginner'}
                           onChange={(e) => handleInputChange(`languages.${index}.proficiency`, e.target.value)}
                           onBlur={handleBlur}
@@ -909,7 +909,7 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                         </select>
                       ) : (
                         <p 
-                          className="text-gray-600 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
+                          className="text-gray-600 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors break-words"
                           onClick={() => handleEditClick(`languages.${index}.proficiency`)}
                         >
                           {lang.proficiency || 'Beginner'}
@@ -938,14 +938,14 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                       <input
                         ref={inputRef}
                         type="text"
-                        className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-full overflow-x-auto"
                         value={activity.organization || ''}
                         onChange={(e) => handleInputChange(`activities.${index}.organization`, e.target.value)}
                         onBlur={handleBlur}
                       />
                     ) : (
                       <p 
-                        className="font-medium text-gray-800 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
+                        className="font-medium text-gray-800 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors break-words"
                         onClick={() => handleEditClick(`activities.${index}.organization`)}
                       >
                         {activity.organization || '(Not specified)'}
@@ -959,14 +959,14 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                       <input
                         ref={inputRef}
                         type="text"
-                        className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-full overflow-x-auto"
                         value={activity.role || ''}
                         onChange={(e) => handleInputChange(`activities.${index}.role`, e.target.value)}
                         onBlur={handleBlur}
                       />
                     ) : (
                       <p 
-                        className="text-gray-600 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
+                        className="text-gray-600 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors break-words"
                         onClick={() => handleEditClick(`activities.${index}.role`)}
                       >
                         {activity.role || '(Not specified)'}
@@ -981,14 +981,14 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                         <input
                           ref={inputRef}
                           type="date"
-                          className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-full overflow-x-auto"
                           value={activity.startDate || ''}
                           onChange={(e) => handleInputChange(`activities.${index}.startDate`, e.target.value)}
                           onBlur={handleBlur}
                         />
                       ) : (
                         <p 
-                          className="text-gray-600 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
+                          className="text-gray-600 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors break-words"
                           onClick={() => handleEditClick(`activities.${index}.startDate`)}
                         >
                           {activity.startDate ? formatDate(activity.startDate) : '(Not specified)'}
@@ -1002,7 +1002,7 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                         <input
                           ref={inputRef}
                           type="date"
-                          className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-full overflow-x-auto"
                           value={activity.endDate || ''}
                           onChange={(e) => handleInputChange(`activities.${index}.endDate`, e.target.value)}
                           onBlur={handleBlur}
@@ -1010,7 +1010,7 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                         />
                       ) : (
                         <p 
-                          className="text-gray-600 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
+                          className="text-gray-600 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors break-words"
                           onClick={() => handleEditClick(`activities.${index}.endDate`)}
                         >
                           {activity.isPresent ? 'Present' : (activity.endDate ? formatDate(activity.endDate) : '(Not specified)')}
@@ -1024,7 +1024,7 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                     {editingField === `activities.${index}.description` ? (
                       <textarea
                         ref={inputRef}
-                        className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 cv-textarea max-w-full overflow-x-auto"
                         value={activity.description || ''}
                         onChange={(e) => handleInputChange(`activities.${index}.description`, e.target.value)}
                         onBlur={handleBlur}
@@ -1032,7 +1032,7 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                       />
                     ) : (
                       <p 
-                        className="mt-1 text-gray-700 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
+                        className="mt-1 text-gray-700 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors break-words"
                         onClick={() => handleEditClick(`activities.${index}.description`)}
                       >
                         {activity.description || '(No description provided)'}
@@ -1060,7 +1060,7 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                   {editingField === 'additionalInfo.interests' ? (
                     <textarea
                       ref={inputRef}
-                      className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 cv-textarea max-w-full overflow-x-auto"
                       value={localFormData.additionalInfo.interests || ''}
                       onChange={(e) => handleInputChange('additionalInfo.interests', e.target.value)}
                       onBlur={handleBlur}
@@ -1089,7 +1089,7 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                   {editingField === 'additionalInfo.achievements' ? (
                     <textarea
                       ref={inputRef}
-                      className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 cv-textarea max-w-full overflow-x-auto"
                       value={localFormData.additionalInfo.achievements || ''}
                       onChange={(e) => handleInputChange('additionalInfo.achievements', e.target.value)}
                       onBlur={handleBlur}
@@ -1118,7 +1118,7 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                   {editingField === 'additionalInfo.publications' ? (
                     <textarea
                       ref={inputRef}
-                      className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 cv-textarea max-w-full overflow-x-auto"
                       value={localFormData.additionalInfo.publications || ''}
                       onChange={(e) => handleInputChange('additionalInfo.publications', e.target.value)}
                       onBlur={handleBlur}
@@ -1157,7 +1157,7 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                     <textarea
                       value={localFormData.additionalInfo.references}
                       onChange={(e) => handleInputChange('additionalInfo.references', e.target.value)}
-                      className="w-full p-2 border rounded mt-2"
+                      className="w-full p-2 border rounded mt-2 max-w-full overflow-x-auto"
                       rows={5}
                       onBlur={handleBlur}
                     />
@@ -1200,7 +1200,7 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
                         {editingField === `additionalInfo.customSections.${idx}.content` ? (
                           <textarea
                             ref={inputRef}
-                            className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="border border-gray-300 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 cv-textarea max-w-full overflow-x-auto"
                             value={section.content || ''}
                             onChange={(e) => handleInputChange(`additionalInfo.customSections.${idx}.content`, e.target.value)}
                             onBlur={handleBlur}

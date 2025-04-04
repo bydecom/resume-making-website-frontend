@@ -31,18 +31,28 @@ const Home = () => {
   useEffect(() => {
     setIsMounted(true);
     window.scrollTo(0, 0);
-    // Set global unmounting flag to false when component mounts
-    window.isUnmounting = false;
+    
+    // Tạo một biến kiểm tra mount state cho component này
+    const mountedRef = { current: true };
 
     return () => {
-      // Set global unmounting flag to true when component is about to unmount
-      window.isUnmounting = true;
+      // Đánh dấu component đã unmount
+      mountedRef.current = false;
       setIsMounted(false);
       controls.stop();
     };
   }, [controls]);
 
-  // Only render animations if component is mounted
+  // Tạo một function an toàn để chạy animation
+  const safeAnimate = async (animation) => {
+    // Kiểm tra nếu component vẫn mounted và window.isUnmounting không true
+    if (isMounted && !window.isUnmounting) {
+      return controls.start(animation);
+    }
+    return Promise.resolve();
+  };
+
+  // Chỉ render animations nếu component được mount
   if (!isMounted) {
     return null;
   }
@@ -69,7 +79,8 @@ const Home = () => {
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
             variants={sectionVariants}
-            animate={controls}
+            // Thay vì dùng animate trực tiếp, sử dụng custom animate prop
+            custom={safeAnimate}
           >
             <Section />
           </motion.div>

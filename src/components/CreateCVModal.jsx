@@ -2,6 +2,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiEdit, FiUpload, FiCopy, FiLink, FiFile, FiChevronLeft } from 'react-icons/fi';
 import DocumentProcessor from '../services/DocumentProcessor';
+import CVExtractService from '../services/cvExtractService';
+import ScanPDFPopup from './ScanPDFPopup';
+import CVScanningPreview from './CVScanningPreview';
+import ProgressPopup from './ProgressPopup';
+import { toast } from 'react-toastify'; // Add this import
 
 const CreateCVModal = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
@@ -13,6 +18,35 @@ const CreateCVModal = ({ isOpen, onClose }) => {
   const linkInputRef = useRef(null); // Thêm ref cho input link
   const [isProcessing, setIsProcessing] = useState(false);
   const [dragActive, setDragActive] = useState(false); // Trạng thái khi đang kéo file
+  
+  // State for popups
+  const [showScanPopup, setShowScanPopup] = useState(false);
+  const [showDataProcessingPopup, setShowDataProcessingPopup] = useState(false);
+  const [showProgressPopup, setShowProgressPopup] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [progressError, setProgressError] = useState({ isError: false, message: '' });
+  const [extractedData, setExtractedData] = useState({});
+  const [extractedText, setExtractedText] = useState('');
+  
+  // Các bước xử lý CV
+  const processingSteps = [
+    { 
+      title: 'Document Upload', 
+      description: 'Uploading and preparing your document' 
+    },
+    { 
+      title: 'Text Extraction', 
+      description: 'Extracting content from your CV' 
+    },
+    { 
+      title: 'Information Analysis', 
+      description: 'Analyzing and organizing your CV data' 
+    },
+    { 
+      title: 'Format Generation', 
+      description: 'Preparing your data for the CV builder' 
+    }
+  ];
 
   // Reset tất cả state khi modal đóng 
   const handleClose = () => {
@@ -22,6 +56,13 @@ const CreateCVModal = ({ isOpen, onClose }) => {
     setPdfLink('');
     setFile(null);
     setIsProcessing(false);
+    setShowScanPopup(false);
+    setShowDataProcessingPopup(false);
+    setShowProgressPopup(false);
+    setCurrentStep(1);
+    setProgressError({ isError: false, message: '' });
+    setExtractedData({});
+    setExtractedText('');
     
     // Gọi hàm onClose từ props
     onClose();
@@ -52,8 +93,11 @@ const CreateCVModal = ({ isOpen, onClose }) => {
   };
 
   const handleUseTemplate = () => {
-    // Chuyển đến trang chọn template
-    navigate('/templates');
+    // Instead of navigating to a non-existent page, just create a new CV
+    // or show a message that templates are coming soon
+    toast.info("CV templates are coming soon! For now, you can create a CV from scratch.");
+    // Alternatively, navigate to new-cv directly:
+    // navigate('/new-cv');
     handleClose();
   };
 
@@ -126,92 +170,113 @@ const CreateCVModal = ({ isOpen, onClose }) => {
       // Hiển thị trạng thái đang xử lý
       setIsProcessing(true);
       
-      let extractedText = '';
+      // Show the scanning animation first
+      setShowScanPopup(true);
       
-      if (uploadMethod === 'file' && file) {
-        // Xử lý tải lên file
-        console.log('Processing file:', file);
-        extractedText = await DocumentProcessor.extractTextFromFile(file, 'eng');
-        console.log('Extracted text (sample):', extractedText.substring(0, 200) + '...');
+      // The actual processing will continue after the scan is complete
+      // in the handleScanComplete function
+      
+    } catch (error) {
+      console.error('Error during document processing:', error);
+      setProgressError({
+        isError: true,
+        message: `Error processing document: ${error.message}`
+      });
+      setIsProcessing(false);
+      setShowScanPopup(false);
+    }
+  };
+  
+  // Function to handle scan completion - will now show the data processing popup
+  const handleScanComplete = async () => {
+    try {
+      // Hide scan popup and show data processing popup
+      setShowScanPopup(false);
+      
+      // In the background, continue with the actual processing
+      let documentText = '';
+      
+      // Text extraction
+      try {
+        if (uploadMethod === 'file' && file) {
+          console.log('Processing file:', file);
+          documentText = await DocumentProcessor.extractTextFromFile(file, 'eng');
+          console.log('Extracted text (sample):', documentText.substring(0, 200) + '...');
+          
+        } else if (uploadMethod === 'link' && pdfLink) {
+          console.log('Processing PDF link:', pdfLink);
+          documentText = await DocumentProcessor.extractTextFromURL(pdfLink, 'eng');
+          console.log('Extracted text from URL (sample):', documentText.substring(0, 200) + '...');
+          
+        } else {
+          throw new Error('Please select a file or enter a valid PDF link');
+        }
         
-      } else if (uploadMethod === 'link' && pdfLink) {
-        // Xử lý link PDF
-        console.log('Processing PDF link:', pdfLink);
-        extractedText = await DocumentProcessor.extractTextFromURL(pdfLink, 'eng');
-        console.log('Extracted text from URL (sample):', extractedText.substring(0, 200) + '...');
+        if (!documentText || documentText.trim() === '') {
+          throw new Error('Could not extract text from the document. Please try a different file.');
+        }
         
-      } else {
-        alert('Please select a file or enter a valid PDF link');
-        setIsProcessing(false);
+        // Store the extracted text
+        setExtractedText(documentText);
+        
+        // Show the data processing popup now that we have text
+        setShowDataProcessingPopup(true);
+        
+      } catch (error) {
+        console.error('Error during text extraction:', error);
+        setProgressError({ 
+          isError: true, 
+          message: `Error extracting text: ${error.message}` 
+        });
+        setShowProgressPopup(true);
         return;
       }
       
-      if (!extractedText || extractedText.trim() === '') {
-        throw new Error('Could not extract text from the document. Please try a different file.');
-      }
-      
-      // Gửi extractedText đến API để phân tích
-      // Hoặc hiển thị cho người dùng kiểm tra trước
-      
-      // Giả lập dữ liệu phân tích CV
-      const extractedData = {
-        personalInfo: {
-          firstName: 'John',
-          lastName: 'Doe',
-          email: 'john.doe@example.com',
-          phone: '(123) 456-7890',
-          location: 'New York, NY',
-          country: 'USA',
-          website: 'www.johndoe.com',
-          linkedin: 'linkedin.com/in/johndoe'
-        },
-        summary: 'Experienced software developer with a passion for creating elegant, efficient solutions.',
-        experience: [
-          {
-            title: 'Senior Developer',
-            company: 'Tech Company',
-            startDate: '2020-01',
-            endDate: '',
-            description: 'Led development team on various projects.',
-            isPresent: true
-          }
-        ],
-        education: [
-          {
-            degree: 'Bachelor of Science in Computer Science',
-            school: 'University of Technology',
-            startDate: '2014-09',
-            endDate: '2018-05',
-            description: 'Graduated with honors',
-            isPresent: false
-          }
-        ],
-        skills: ['JavaScript', 'React', 'Node.js', 'Python']
-      };
-      
-      console.log('Extracted data:', extractedData);
-      
-      // Chuyển hướng đến trang NewCV với data đã phân tích
-      navigate('/new-cv', { 
-        state: { 
-          fromUpload: true, 
-          extractedData: extractedData 
-        } 
-      });
-      
-      handleClose();
     } catch (error) {
       console.error('Error during document processing:', error);
-      alert(`Error processing document: ${error.message}`);
-      setIsProcessing(false);
+      setProgressError({
+        isError: true,
+        message: `Error processing document: ${error.message}`
+      });
+      setShowDataProcessingPopup(false);
+      setShowProgressPopup(true);
     }
   };
+  
+  // Function to handle data processing completion
+  const handleDataProcessingComplete = (data) => {
+    // Store the extracted data
+    setExtractedData(data);
+    
+    // Hide data processing popup
+    setShowDataProcessingPopup(false);
+    
+    // Navigate to the CV builder with the extracted data
+    navigate('/new-cv', { 
+      state: { 
+        fromUpload: true, 
+        extractedData: data
+      } 
+    });
+    
+    // Close the modal
+    handleClose();
+  };
 
+  const handleRetry = () => {
+    setProgressError({ isError: false, message: '' });
+    setCurrentStep(1);
+    setShowProgressPopup(false);
+    // Cho phép người dùng thử lại từ đầu
+    setIsProcessing(false);
+  };
+
+  // Modal chính để chọn cách tạo CV
   const mainModal = (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl overflow-hidden">
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl overflow-hidden">
         <div className="p-4 border-b flex justify-between items-center">
-          <h2 className="text-xl font-semibold">Create New CV</h2>
+          <h2 className="text-xl font-semibold">Create a New CV</h2>
           <button 
             onClick={handleClose}
             className="text-gray-500 hover:text-gray-700"
@@ -223,10 +288,13 @@ const CreateCVModal = ({ isOpen, onClose }) => {
         </div>
         
         <div className="p-6">
-          <p className="text-gray-600 mb-4 text-center">
-            Choose how you want to create your new CV
-          </p>
-          
+          <div className="text-center mb-6">
+            <h3 className="text-lg font-medium mb-2">Choose how to create your CV</h3>
+            <p className="text-gray-600">
+              Select an option below to get started with your professional CV
+            </p>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Option 1: Create from Scratch */}
             <div 
@@ -264,28 +332,20 @@ const CreateCVModal = ({ isOpen, onClose }) => {
               <div className="bg-purple-100 p-4 rounded-full mb-4">
                 <FiCopy className="text-purple-600 text-3xl" />
               </div>
-              <h3 className="text-lg font-medium mb-2">Use a Template</h3>
+              <h3 className="text-lg font-medium mb-2">Use Template</h3>
               <p className="text-gray-600 text-sm">
-                Choose from our professionally designed templates to get started quickly.
+                Choose from our professional templates and customize them.
               </p>
             </div>
           </div>
         </div>
-        
-        <div className="border-t p-4 bg-gray-50 flex justify-end">
-          <button 
-            onClick={handleClose}
-            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100"
-          >
-            Cancel
-          </button>
-        </div>
       </div>
     </div>
   );
-
+  
+  // Modal để upload CV
   const uploadModal = (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl overflow-hidden">
         <div className="p-4 border-b flex justify-between items-center">
           <div className="flex items-center">
@@ -308,7 +368,7 @@ const CreateCVModal = ({ isOpen, onClose }) => {
         </div>
         
         <div className="p-6">
-          <div className="text-center mb-8">
+          <div className="text-center mb-2">
             <h3 className="text-lg font-medium mb-2">Choose how to upload your CV</h3>
             <p className="text-gray-600">
               We support PDF and Word documents (.docx)
@@ -328,7 +388,7 @@ const CreateCVModal = ({ isOpen, onClose }) => {
                 >
                   {file ? (
                     <div className="flex flex-col items-center">
-                      <FiFile className="text-blue-500 text-5xl mb-3" />
+                      <FiFile className="text-blue-500 text-5xl mb-2" />
                       <p className="font-medium text-blue-800">{file.name}</p>
                       <p className="text-sm text-gray-500 mt-1">
                         {(file.size / 1024 / 1024).toFixed(2)} MB
@@ -398,35 +458,37 @@ const CreateCVModal = ({ isOpen, onClose }) => {
                 <p className="text-xs text-gray-500 mt-2">
                   Make sure the link points directly to a PDF document
                 </p>
-                <div className="mt-auto bg-white border border-gray-200 rounded p-3">
-                  <h4 className="font-medium text-sm text-purple-800 mb-1">Tips:</h4>
-                  <ul className="text-xs text-gray-600 list-disc pl-4 space-y-1">
-                    <li>Use Google Drive or Dropbox public links</li>
-                    <li>Ensure the PDF is accessible without login</li>
-                    <li>Check that your link ends with .pdf</li>
-                  </ul>
-                </div>
+                <div className="flex-grow"></div>
+                {pdfLink && (
+                  <div className="w-full text-center py-3 border-t mt-4">
+                    <button 
+                      onClick={() => setPdfLink('')}
+                      className="text-red-500 text-sm hover:underline"
+                    >
+                      Clear link
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <div 
                 className="border border-gray-200 rounded-lg p-6 flex flex-col items-center text-center cursor-pointer transition-all hover:border-purple-300 h-64"
                 onClick={() => setUploadMethod('link')}
               >
-                <div className="bg-purple-100 p-4 rounded-full mb-4">
+                <div className="bg-purple-100 p-4 rounded-full mb-2">
                   <FiLink className="text-purple-600 text-3xl" />
                 </div>
-                <h3 className="text-lg font-medium mb-2">Enter PDF Link</h3>
+                <h3 className="text-lg font-medium mb-2">Use PDF Link</h3>
                 <p className="text-gray-600 text-sm">
-                  Provide a link to your PDF document
+                  Enter a direct link to your PDF document
                 </p>
               </div>
             )}
           </div>
           
-          {/* Instructions */}
-          <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
-            <h4 className="font-medium text-blue-800 mb-2">How it works</h4>
-            <ol className="text-sm text-gray-700 list-decimal pl-5 space-y-1">
+          <div className="bg-gray-50 p-6 rounded-lg mb-2">
+            <h3 className="text-lg font-medium mb-1">How it works</h3>
+            <ol className="space-y-2 list-decimal list-inside text-gray-700">
               <li>Upload your existing CV in PDF or Word format</li>
               <li>Our system will extract information from your document</li>
               <li>Review and edit the extracted information</li>
@@ -468,7 +530,70 @@ const CreateCVModal = ({ isOpen, onClose }) => {
     </div>
   );
 
-  return showUploadModal ? uploadModal : mainModal;
+  return (
+    <>
+      {showUploadModal ? uploadModal : mainModal}
+      
+      {/* Scan PDF Popup */}
+      <ScanPDFPopup 
+        isOpen={showScanPopup}
+        fileName={file ? file.name : 'Resume.pdf'}
+        onScanComplete={handleScanComplete}
+        onError={(errorMessage) => {
+          setProgressError({
+            isError: true,
+            message: errorMessage || 'An error occurred while scanning your document'
+          });
+          setShowProgressPopup(true);
+          setShowScanPopup(false);
+        }}
+      />
+      
+      {/* CV Data Processing Popup with Preview */}
+      <CVScanningPreview
+        isOpen={showDataProcessingPopup}
+        documentText={extractedText}
+        onComplete={(data) => {
+          // Transform the data to match NewCV's structure
+          const transformedData = {
+            ...data,
+            personalInfo: {
+              ...data.personalInfo,
+              professionalTitle: data.personalInfo?.professionalTitle || '' // Use professionalTitle from backend
+            }
+          };
+          
+          // Store the extracted data
+          setExtractedData(transformedData);
+          
+          // Hide data processing popup
+          setShowDataProcessingPopup(false);
+          
+          // Navigate to the CV builder with the extracted data
+          navigate('/new-cv', { 
+            state: { 
+              fromUpload: true, 
+              extractedData: transformedData
+            } 
+          });
+          
+          // Close the modal
+          handleClose();
+        }}
+      />
+      
+      {/* Keep the error popup for displaying errors */}
+      {showProgressPopup && progressError.isError && (
+        <ProgressPopup 
+          currentStep={currentStep}
+          steps={processingSteps}
+          isError={progressError.isError}
+          errorMessage={progressError.message}
+          onRetry={handleRetry}
+        />
+      )}
+    </>
+  );
 };
 
 export default CreateCVModal; 

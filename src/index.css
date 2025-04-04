@@ -9,9 +9,61 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Hiển thị thanh cuộn cho body/html */
+  overflow-y: auto;
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+/* Custom Scrollbar Styles CHÍNH */
+
+/* Chiều rộng của thanh cuộn trên toàn bộ trang (html, body) */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 6px; /* Đặt độ rộng của thanh cuộn */
+}
+
+/* Màu nền của thanh cuộn trên toàn bộ trang */
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Màu của phần kéo (thumb) trên toàn bộ trang */
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb {
+  background-color: #2563eb; /* Màu xanh của Tailwind (blue-600) */
+  border-radius: 4px; /* Bo góc cho phần kéo */
+}
+
+/* Khi hover vào thanh cuộn trên toàn bộ trang */
+html::-webkit-scrollbar-thumb:hover,
+body::-webkit-scrollbar-thumb:hover {
+  background-color: #1d4ed8; /* Màu xanh đậm hơn khi hover (blue-700) */
+}
+
+/* Ẩn thanh cuộn cho các component con nhưng vẫn cho phép cuộn */
+/* Áp dụng cho tất cả các phần tử khác ngoài body */
+div::-webkit-scrollbar,
+section::-webkit-scrollbar,
+article::-webkit-scrollbar,
+aside::-webkit-scrollbar,
+nav::-webkit-scrollbar,
+main::-webkit-scrollbar {
+  width: 6px;
+  display: none; /* Ẩn thanh cuộn */
+}
+
+/* CSS cho phép cuộn nhưng ẩn thanh cuộn */
+.scrollable {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+  overflow-y: auto; /* Vẫn cho phép cuộn */
+}
+
+.scrollable::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
