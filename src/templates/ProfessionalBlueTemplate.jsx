@@ -1,5 +1,5 @@
 import React from 'react';
-import { FiMail, FiPhone, FiMapPin, FiGlobe, FiLinkedin, FiCalendar, FiBriefcase, FiBook, FiAward, FiCode, FiGlobe as FiLanguage } from 'react-icons/fi';
+import { FiMail, FiPhone, FiMapPin, FiGlobe, FiLinkedin, FiCalendar,FiGlobe as FiLanguage } from 'react-icons/fi';
 import '../pages/NewCV/lib/input-styles.css';
 
 const ProfessionalBlueTemplate = ({ formData }) => {
@@ -47,13 +47,13 @@ const ProfessionalBlueTemplate = ({ formData }) => {
           {personalInfo?.firstName || 'John'} {personalInfo?.lastName || 'Doe'}
         </h1>
         <p className="text-sm opacity-90 mb-4 cv-long-text">
-          {personalInfo?.headline || 'Professional Title'}
+          {personalInfo?.professionalHeadline || 'Professional Title'}
         </p>
         
         {/* First row: Email, Phone, Location */}
         <div className="flex text-xs mb-2">
           {personalInfo?.email && (
-            <div className="flex items-center cv-flex-item">
+            <div className="flex items-center cv-flex-item">  
               <FiMail className="mr-1 flex-shrink-0" />
               <span className="cv-long-text">{personalInfo.email}</span>
             </div>

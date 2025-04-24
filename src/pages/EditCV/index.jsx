@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Save } from 'lucide-react';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
+import { ArrowLeft, Plus, Check, Save } from 'lucide-react';
 import { HiArrowTopRightOnSquare } from "react-icons/hi2";
 import {
   PersonalInfoStep,
@@ -27,18 +27,20 @@ import 'react-toastify/dist/ReactToastify.css';
 import api, { handleApiError, callApi } from '../../utils/api';
 import CVSaveConfirmation from '../../components/CVSaveConfirmation';
 import { getDefaultTemplate, getTemplateById } from '../../templates';
+import cvService from '../../services/cvService';
 
-
-const NewCV = () => {
-  const [error, setError] = useState(null);
-  const [resumeId, setResumeId] = useState(null);
-  const [generating, setGenerating] = useState(false);
-  const [generatedContent, setGeneratedContent] = useState(null);
+const EditCV = () => {
+  const { cvId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const returnPath = location.state?.returnPath;
+  const previousState = location.state?.previousState;
   const [step, setStep] = useState(1);
   const [maxStepReached, setMaxStepReached] = useState(1);
   const [progressBarHeight, setProgressBarHeight] = useState(0);
+  const [formData, setFormData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   
   // State để theo dõi các section phụ đã chọn và đã hoàn thành
   const [selectedSections, setSelectedSections] = useState([]);
@@ -47,51 +49,12 @@ const NewCV = () => {
   // State để theo dõi section phụ hiện tại đang được hiển thị
   const [currentAdditionalSection, setCurrentAdditionalSection] = useState(null);
   
-  const [formData, setFormData] = useState({
-    personalInfo: {
-      firstName: '',
-      lastName: '',
-      professionalHeadline: '',
-      email: '',
-      phone: '',
-      location: '',
-      country: '',
-      website: '',
-      linkedin: ''
-    },
-    template: { id: getDefaultTemplate().id },
-    summary: '',
-    education: [],
-    experience: [],
-    skills: [],
-    certifications: [],
-    projects: [],
-    languages: [],
-    activities: [],
-    additionalInfo: {
-      interests: '',
-      achievements: '',
-      publications: '',
-      references: '',
-      customSections: []
-    },
-    customFields: []
-  });
-
   // Thêm state mới cho popup
   const [showFullPagePreview, setShowFullPagePreview] = useState(false);
 
   // Thêm state cho name modal
   const [showNameModal, setShowNameModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Thêm vào phần state
-  const [isEditing, setIsEditing] = useState(false);
-  const [cvId, setCvId] = useState(null);
-
-  // Thêm các state khác nếu cần
-  const [sections, setSections] = useState([]); // Định nghĩa sections
-  const [prompt, setPrompt] = useState(''); // Định nghĩa prompt nếu sử dụng
 
   // Thêm state cho Save Confirmation
   const [showSaveConfirmation, setShowSaveConfirmation] = useState(false);
@@ -102,69 +65,29 @@ const NewCV = () => {
   // Thêm state để quản lý các lỗi từng trường
   const [validationErrors, setValidationErrors] = useState({});
 
-  // Kiểm tra xem có dữ liệu được truyền từ trang upload không
-  const extractedData = location.state?.extractedData;
-  const fromUpload = location.state?.fromUpload;
-  
-  // Khởi tạo state với dữ liệu từ extractedData nếu có
-  const [cvData, setCvData] = useState(() => {
-    if (fromUpload && extractedData) {
-      return {
-        personalInfo: extractedData.personalInfo || {
-          firstName: '',
-          lastName: '',
-          professionalHeadline: '',
-          email: '',
-          phone: '',
-          location: '',
-          country: '',
-          website: '',
-          linkedin: ''
-        },
-        summary: extractedData.summary || '',
-        experience: extractedData.experience || [],
-        education: extractedData.education || [],
-        skills: extractedData.skills || [],
-        projects: extractedData.projects || [],
-        certifications: extractedData.certifications || [],
-        languages: extractedData.languages || []
-      };
-    } else {
-      return {
-        // ... your default state here ...
-        personalInfo: {
-          firstName: '',
-          lastName: '',
-          professionalHeadline: '',
-          email: '',
-          phone: '',
-          location: '',
-          country: '',
-          website: '',
-          linkedin: ''
-        },
-        summary: '',
-        experience: [],
-        education: [],
-        skills: [],
-        projects: [],
-        certifications: [],
-        languages: []
-      };
-    }
-  });
+  // Load CV data when component mounts
+  useEffect(() => {
+    const loadCVData = async () => {
+      try {
+        setIsLoading(true);
+        // Fetch CV data from API using cvId
+        const response = await cvService.getCV(cvId);
+        if (response && response.data) {
+          setFormData(response.data);
+          setIsLoading(false);
+        } else {
+          setError('Could not load CV data. Please try again.');
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error('Error loading CV data:', error);
+        setError('Error loading CV data. Please try again.');
+        setIsLoading(false);
+      }
+    };
 
-
-
-  // Định nghĩa các section phụ
-  const additionalSections = [
-    { id: 'certifications', name: 'Certifications', component: CertificationsStep },
-    { id: 'projects', name: 'Projects', component: ProjectsStep },
-    { id: 'languages', name: 'Languages', component: LanguagesStep },
-    { id: 'activities', name: 'Activities', component: ActivitiesStep },
-    { id: 'additionalInfo', name: 'Additional Information', component: AdditionalInfoStep },
-    { id: 'customFields', name: 'Custom Fields', component: CustomFieldsStep }
-  ];
+    loadCVData();
+  }, [cvId]);
 
   useEffect(() => {
     document.body.classList.add('hide-header');
@@ -190,6 +113,24 @@ const NewCV = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  const handleInputChange = (fieldPath, value) => {
+    setFormData(prevData => {
+      const newData = { ...prevData };
+      const fields = fieldPath.split('.');
+      let current = newData;
+      
+      for (let i = 0; i < fields.length - 1; i++) {
+        if (!current[fields[i]]) {
+          current[fields[i]] = {};
+        }
+        current = current[fields[i]];
+      }
+      
+      current[fields[fields.length - 1]] = value;
+      return newData;
+    });
+  };
 
   const updateFormData = (section, data) => {
     console.log(`Updating ${section} with:`, data);
@@ -252,59 +193,14 @@ const NewCV = () => {
     // Nếu đã có đủ thông tin, hiển thị popup xác nhận lưu
     setShowSaveConfirmation(true);
   };
-  
-  // Thêm vào useEffect để kiểm tra xem có đang edit CV không
-  useEffect(() => {
-    // Kiểm tra nếu có cvId trong location state (từ trang dashboard)
-    if (location.state?.cvId) {
-      setCvId(location.state.cvId);
-      setIsEditing(true);
-      
-      // Fetch dữ liệu CV hiện có từ API
-      const token = localStorage.getItem('token');
-      const apiUrl = `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/cv/${location.state.cvId}`;
-      
-      fetch(apiUrl, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      .then(response => {
-        if (!response.ok) throw new Error('Failed to fetch CV data');
-        return response.json();
-      })
-      .then(data => {
-        // Cập nhật formData với dữ liệu từ server
-        // Đảm bảo template ID hợp lệ
-        const template = data.data.template || { id: getDefaultTemplate().id };
-        
-        // Kiểm tra xem template ID từ server có tồn tại trong hệ thống không
-        const validTemplate = getTemplateById(template.id);
-        if (!validTemplate) {
-          template.id = getDefaultTemplate().id;
-        }
-        
-        setFormData({
-          ...data.data,
-          template: template
-        });
-      })
-      .catch(error => {
-        console.error('Error fetching CV:', error);
-        alert('Could not load CV data. Please try again.');
-      });
-    }
-  }, [location.state]);
 
-  // Hàm xử lý sau khi người dùng đặt tên CV
-  const handleSaveWithName = (cvName) => {
+  const handleSaveWithName = async (cvName) => {
     setShowNameModal(false);
     
     // Nếu không có tên, tạo tên mặc định
-    const finalName = cvName || `Untitled${Math.floor(Math.random() * 1000)}`;
+    const finalName = cvName || formData.name || `Untitled${Math.floor(Math.random() * 1000)}`;
     
-    console.log("Submitting CV with name:", finalName);
+    console.log("Updating CV with name:", finalName);
     
     // Hiển thị trạng thái đang xử lý
     setIsSubmitting(true);
@@ -337,82 +233,34 @@ const NewCV = () => {
       customFields: formData.customFields || []
     };
     
-    // Phần xử lý token và gọi API
     try {
-      // Lấy token từ localStorage với đúng key
-      const token = localStorage.getItem('token');
+      // Gọi API để cập nhật CV
+      await cvService.updateCV(cvId, formattedData);
       
-      console.log('Using token:', token ? 'Found token' : 'No token found');
+      toast.success(`CV "${finalName}" updated successfully!`);
       
-      if (!token) {
-        console.error('No token found in localStorage');
-        toast.error('You need to login to save your CV');
-        setIsSubmitting(false);
-        return;
-      }
-      
-      // Xác định phương thức và URL API dựa vào việc đang chỉnh sửa hay tạo mới
-      const method = isEditing ? 'PUT' : 'POST';
-      const apiUrl = isEditing 
-        ? `http://localhost:5000/api/cv/${cvId}`
-        : 'http://localhost:5000/api/cv';
-      
-      console.log(`${isEditing ? 'Updating' : 'Saving'} CV to API:`, apiUrl);
-      
-      // Gọi API để lưu CV
-      fetch(apiUrl, {
-        method: method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(formattedData)
-      })
-      .then(response => {
-        console.log('Response status:', response.status);
-        
-        if (!response.ok) {
-          if (response.status === 401) {
-            toast.error('Your session has expired. Please login again.');
-            // Xóa token hết hạn
-            localStorage.removeItem('token');
-            throw new Error('Authentication failed');
-          } else {
-            return response.text().then(text => {
-              try {
-                const errorData = JSON.parse(text);
-                throw new Error(errorData.message || `Error ${response.status}`);
-              } catch (e) {
-                throw new Error(`Error ${response.status}: ${text || response.statusText}`);
-              }
-            });
-          }
-        }
-        return response.json();
-      })
-      .then(data => {
-        console.log('CV saved successfully:', data);
-        
-        toast.success(`CV "${finalName}" saved successfully!`);
-        
-        // Chuyển hướng đến trang Dashboard
-        navigate('/dashboard', { 
-          state: { 
+      // Sau khi lưu thành công
+      if (returnPath === '/new-resume') {
+        // Nếu đang quay lại từ new-resume, giữ lại state
+        navigate(returnPath, {
+          state: {
+            ...previousState,
             message: 'CV saved successfully!',
-            cvId: data.data?._id
-          } 
+            forceCVRefresh: true
+          },
+          replace: true
         });
-      })
-      .catch(error => {
-        console.error('Error saving CV:', error);
-        toast.error(`Failed to save CV: ${error.message}`);
-      })
-      .finally(() => {
-        setIsSubmitting(false);
-      });
+      } else {
+        // Mặc định quay về dashboard
+        navigate('/dashboard', {
+          state: { message: 'CV saved successfully!' },
+          replace: true
+        });
+      }
     } catch (error) {
-      console.error('Error in API call preparation:', error);
-      toast.error('An error occurred while preparing the request.');
+      console.error('Error saving CV:', error);
+      toast.error(`Failed to save CV: ${error.message}`);
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -433,8 +281,6 @@ const NewCV = () => {
       }
     }
   };
-  
-
 
   const renderStep = () => {
     console.log("Rendering step:", step);
@@ -510,8 +356,6 @@ const NewCV = () => {
         return <div>Unknown step</div>;
     }
   };
-
-  
 
   const goToStep = (stepNumber) => {
     console.log("Attempting to go to step:", stepNumber);
@@ -602,62 +446,6 @@ const NewCV = () => {
     }
   };
 
-  // Thêm useEffect để xử lý dữ liệu từ document upload
-  useEffect(() => {
-    // Kiểm tra nếu có dữ liệu được truyền từ trang upload
-    if (location.state?.fromUpload && location.state?.extractedData) {
-      const uploadedData = location.state.extractedData;
-      console.log('Received extracted data:', uploadedData);
-      
-      // Cập nhật formData với dữ liệu đã được phân tích
-      setFormData(prevData => ({
-        ...prevData,
-        ...uploadedData
-      }));
-      
-      // Xóa state để tránh tình trạng load lại data khi refresh
-      window.history.replaceState({}, document.title);
-    }
-  }, [location.state]);
-
-  // Hàm hiển thị thông báo
-  const showNotification = (message) => {
-    // Implement your notification logic here
-    console.log(message);
-    // Ví dụ: toast(message) nếu dùng react-toastify
-  };
-
-  const saveResume = async () => {
-    try {
-      const resumeData = {
-        // Your resume data structure
-      };
-      
-      const response = await api.post('/resumes', resumeData);
-      setResumeId(response.data.id);
-      showNotification('Resume saved successfully!');
-    } catch (error) {
-      const errorMessage = handleApiError(error, navigate);
-      setError(errorMessage);
-    }
-  }
-
-  // Nếu dùng callApi cũ
-  const generateResumeWithAI = async () => {
-    try {
-      setGenerating(true);
-      const data = await callApi('/generate-resume', 'POST', { 
-        prompt, sections 
-      });
-      setGeneratedContent(data.content);
-    } catch (error) {
-      const errorMessage = handleApiError(error, navigate);
-      setError(errorMessage);
-    } finally {
-      setGenerating(false);
-    }
-  }
-
   // Thêm hàm xử lý khi đóng popup xác nhận
   const handleCloseSaveConfirmation = () => {
     setShowSaveConfirmation(false);
@@ -730,14 +518,6 @@ const NewCV = () => {
     goToStep(1);
   };
 
-  // Hiển thị thông báo khi có dữ liệu được trích xuất
-  useEffect(() => {
-    if (fromUpload && extractedData) {
-      // Xóa state sau khi đã sử dụng để tránh duplicate nếu trang được refresh
-      navigate('/new-cv', { replace: true });
-    }
-  }, []);
-
   // Thêm effect để kiểm soát scroll của trang khi modal đang mở
   useEffect(() => {
     // Kiểm tra nếu bất kỳ modal nào đang mở
@@ -755,6 +535,38 @@ const NewCV = () => {
       document.body.style.overflow = ''; // Đảm bảo khôi phục scroll khi thoát trang
     };
   }, [showFullPagePreview, showNameModal, showSaveConfirmation, showConfirmationDialog]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <div className="text-red-500 text-xl mb-4">{error}</div>
+        <button
+          onClick={() => navigate('/dashboard')}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Back to Dashboard
+        </button>
+      </div>
+    );
+  }
+
+  // Định nghĩa các section phụ
+  const additionalSections = [
+    { id: 'certifications', name: 'Certifications', component: CertificationsStep },
+    { id: 'projects', name: 'Projects', component: ProjectsStep },
+    { id: 'languages', name: 'Languages', component: LanguagesStep },
+    { id: 'activities', name: 'Activities', component: ActivitiesStep },
+    { id: 'additionalInfo', name: 'Additional Information', component: AdditionalInfoStep },
+    { id: 'customFields', name: 'Custom Fields', component: CustomFieldsStep }
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -938,13 +750,9 @@ const NewCV = () => {
         isOpen={showNameModal}
         onClose={() => setShowNameModal(false)}
         onSave={handleSaveWithName}
-        defaultName={
-          isEditing && formData.name 
-            ? formData.name
-            : (formData.personalInfo?.firstName 
-                ? `${formData.personalInfo.firstName}'s CV` 
-                : `Untitled${Math.floor(Math.random() * 1000)}`)
-        }
+        defaultName={formData.name || (formData.personalInfo?.firstName 
+          ? `${formData.personalInfo.firstName}'s CV` 
+          : `Untitled${Math.floor(Math.random() * 1000)}`)}
       />
       
       {/* Thêm CVSaveConfirmation */}
@@ -1013,4 +821,4 @@ const NewCV = () => {
   );
 };
 
-export default NewCV;
+export default EditCV;

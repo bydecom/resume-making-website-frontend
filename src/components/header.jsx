@@ -107,7 +107,9 @@ const Header = () => {
   }, [location]);
 
   // Thêm điều kiện kiểm tra đường dẫn để ẩn header
-  if (location.pathname === '/new-cv' || location.pathname.includes('/edit-cv/')) {
+  if (location.pathname === '/new-cv' || 
+      location.pathname.includes('/edit-cv/') || 
+      location.pathname === '/new-resume') {
     return null;
   }
 
@@ -129,7 +131,7 @@ const Header = () => {
               <button onClick={() => handleNavigation('/dashboard')} className="flex items-center hover:text-gray-800">
                 Dashboard
               </button>
-              <button onClick={() => handleNavigation('/convert')} className="hover:text-gray-800">
+              {/* <button onClick={() => handleNavigation('/convert')} className="hover:text-gray-800">
                 Convert CV
               </button>
               <button onClick={() => handleNavigation('/reviewcv')} className="hover:text-gray-800">
@@ -140,7 +142,7 @@ const Header = () => {
               </button>
               <button onClick={() => handleNavigation('/enhancemail')} className="flex items-center hover:text-gray-800">
                 Enhance Letter
-              </button>
+              </button> */}
 
               <div className="w-px h-6 bg-gray-300 mx-2"></div>
               {isLoggedIn ? (

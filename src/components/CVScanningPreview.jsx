@@ -82,6 +82,7 @@ const CVScanningPreview = ({ isOpen, onComplete = () => {}, data = {}, documentT
       items: [
         { id: "firstName", label: "First Name", value: null, status: "pending" },
         { id: "lastName", label: "Last Name", value: null, status: "pending" },
+        { id: "professionalHeadline", label: "Professional Headline", value: null, status: "pending" },
         { id: "email", label: "Email", value: null, status: "pending" },
         { id: "phone", label: "Phone", value: null, status: "pending" },
         { id: "location", label: "Location", value: null, status: "pending" },
@@ -262,6 +263,12 @@ const CVScanningPreview = ({ isOpen, onComplete = () => {}, data = {}, documentT
     updateItemValue("personalInfo", "lastName", lastName);
     setExtractedData(prev => ({ ...prev, personalInfo: { ...prev.personalInfo, lastName } }));
     
+    updateItemStatus("personalInfo", "professionalHeadline", "scanning");
+    await simulateProcessingDelay(300);
+    const professionalHeadline = data.personalInfo?.professionalHeadline || '';
+    updateItemValue("personalInfo", "professionalHeadline", professionalHeadline);
+    setExtractedData(prev => ({ ...prev, personalInfo: { ...prev.personalInfo, professionalHeadline } }));
+
     // Email
     updateItemStatus("personalInfo", "email", "scanning");
     await simulateProcessingDelay(300);
@@ -713,8 +720,8 @@ const CVScanningPreview = ({ isOpen, onComplete = () => {}, data = {}, documentT
                         {extractedData.personalInfo?.firstName || ''} {extractedData.personalInfo?.lastName || ''}
                       </h1>
                       
-                      {extractedData.personalInfo?.professionalTitle && (
-                        <h2 className="text-lg text-gray-600 mb-3">{extractedData.personalInfo.professionalTitle}</h2>
+                      {extractedData.personalInfo?.professionalHeadline && (
+                        <h2 className="text-lg text-gray-600 mb-3">{extractedData.personalInfo.professionalHeadline}</h2>
                       )}
                       
                       <div className="flex flex-wrap gap-3 text-sm mt-2">

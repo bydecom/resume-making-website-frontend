@@ -16,7 +16,7 @@ const generateCVAssessment = (cvData) => {
 
   // Kiểm tra thông tin cá nhân
   const personalInfoFields = Object.keys(cvData.personalInfo || {}).filter(key => 
-    ['firstName', 'lastName', 'email', 'phone', 'location', 'country'].includes(key)
+    ['firstName', 'lastName', 'professionalHeadline', 'email', 'phone', 'location', 'country'].includes(key)
   );
   const personalInfoScore =
     personalInfoFields.filter(key => cvData.personalInfo[key]).length / personalInfoFields.length;
@@ -109,10 +109,10 @@ const CVSaveConfirmation = ({ isOpen, onClose, onSave, cvData }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center overflow-auto">
-      <div className="bg-white rounded-lg max-w-6xl max-h-[90vh] overflow-hidden relative">
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+      <div className="bg-white rounded-lg w-full max-w-6xl max-h-[90vh] flex flex-col relative">
         {/* Header */}
-        <div className="p-6 pb-2 border-b">
+        <div className="p-6 pb-2 border-b flex-shrink-0">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold">Save Your CV</h2>
             <button onClick={onClose} className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-gray-100">
@@ -121,153 +121,163 @@ const CVSaveConfirmation = ({ isOpen, onClose, onSave, cvData }) => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6 pt-2">
-          {/* Left Column - CV Assessment */}
-          <div className="space-y-4">
-            <div className="border rounded-lg p-4 shadow-sm">
-              <h3 className="text-lg font-semibold mb-2">CV Assessment</h3>
-              <div className="mb-4">
-                <div className="flex items-center justify-between mb-1">
-                  <span>Overall Score</span>
-                  <span className="font-bold">{assessment.score}%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2.5">
-                  <div
-                    className="h-2.5 rounded-full"
-                    style={{
-                      width: `${assessment.score}%`,
-                      backgroundColor:
-                        assessment.score >= 80 ? "#10b981" : assessment.score >= 60 ? "#f59e0b" : "#ef4444",
-                    }}
-                  ></div>
-                </div>
-              </div>
-              
-              {/* Tabs */}
-              <div className="border-b">
-                <div className="flex border-b">
-                  <button className="px-4 py-2 border-b-2 border-blue-500 font-medium">Strengths</button>
-                  <button className="px-4 py-2 text-gray-500 hover:text-gray-700">Improvements</button>
-                  <button className="px-4 py-2 text-gray-500 hover:text-gray-700">Tips</button>
+        {/* Scrollable Content */}
+        <div className="overflow-y-auto flex-1 p-6 pt-2 scrollbar-hide">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Left Column - CV Assessment */}
+            <div className="space-y-4">
+              <div className="border rounded-lg p-4 shadow-sm">
+                <h3 className="text-lg font-semibold mb-2">CV Assessment</h3>
+                <div className="mb-4">
+                  <div className="flex items-center justify-between mb-1">
+                    <span>Overall Score</span>
+                    <span className="font-bold">{assessment.score}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2.5">
+                    <div
+                      className="h-2.5 rounded-full"
+                      style={{
+                        width: `${assessment.score}%`,
+                        backgroundColor:
+                          assessment.score >= 80 ? "#10b981" : assessment.score >= 60 ? "#f59e0b" : "#ef4444",
+                      }}
+                    ></div>
+                  </div>
                 </div>
                 
-                <div className="py-2 max-h-[300px] overflow-y-auto scrollable">
-                  <ul className="space-y-2">
-                    {assessment.strengths.length > 0 ? (
-                      assessment.strengths.map((strength, index) => (
-                        <li key={index} className="flex items-start">
-                          <span className="text-green-500 mr-2">✓</span>
-                          <span>{strength}</span>
-                        </li>
-                      ))
-                    ) : (
-                      <li className="text-gray-500 italic">No strengths identified yet.</li>
+                {/* Tabs */}
+                <div className="border-b">
+                  <div className="flex border-b">
+                    <button className="px-4 py-2 border-b-2 border-blue-500 font-medium">Strengths</button>
+                    <button className="px-4 py-2 text-gray-500 hover:text-gray-700">Improvements</button>
+                    <button className="px-4 py-2 text-gray-500 hover:text-gray-700">Tips</button>
+                  </div>
+                  
+                  <div className="py-2 max-h-[300px] overflow-y-auto scrollable">
+                    <ul className="space-y-2">
+                      {assessment.strengths.length > 0 ? (
+                        assessment.strengths.map((strength, index) => (
+                          <li key={index} className="flex items-start">
+                            <span className="text-green-500 mr-2">✓</span>
+                            <span>{strength}</span>
+                          </li>
+                        ))
+                      ) : (
+                        <li className="text-gray-500 italic">No strengths identified yet.</li>
+                      )}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
+                <p className="text-sm text-gray-700">
+                  Are you sure you want to save this CV? You can always edit it later.
+                </p>
+              </div>
+            </div>
+
+            {/* Middle and Right Columns - CV Preview */}
+            <div className="md:col-span-2">
+              <div className="border rounded-lg shadow-sm overflow-hidden">
+                <div className="bg-blue-600 text-white p-6">
+                  <h2 className="text-3xl font-bold">
+                    {cvData.personalInfo?.firstName} {cvData.personalInfo?.lastName}
+                  </h2>
+                  <p className="text-xl mt-1">{cvData.personalInfo?.professionalHeadline || cvData.personalInfo?.headline || "Professional"}</p>
+                  <div className="flex flex-wrap gap-3 mt-3 text-sm">
+                    {(cvData.personalInfo?.professionalHeadline || cvData.personalInfo?.headline) && (
+                      <div className="flex items-center">
+                        <span className="mr-1">💼</span>
+                        <span>{cvData.personalInfo?.professionalHeadline || cvData.personalInfo?.headline}</span>
+                      </div>
                     )}
-                  </ul>
+                    {cvData.personalInfo?.email && (
+                      <div className="flex items-center">
+                        <span className="mr-1">✉️</span>
+                        <span>{cvData.personalInfo.email}</span>
+                      </div>
+                    )}
+                    {cvData.personalInfo?.phone && (
+                      <div className="flex items-center">
+                        <span className="mr-1">📱</span>
+                        <span>{cvData.personalInfo.phone}</span>
+                      </div>
+                    )}
+                    {cvData.personalInfo?.location && (
+                      <div className="flex items-center">
+                        <span className="mr-1">📍</span>
+                        <span>
+                          {cvData.personalInfo.location}
+                          {cvData.personalInfo.country && `, ${cvData.personalInfo.country}`}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
-              <p className="text-sm text-gray-700">
-                Are you sure you want to save this CV? You can always edit it later.
-              </p>
-            </div>
-          </div>
+                <div className="h-[400px] p-6 overflow-y-auto scrollable">
+                  {/* Summary Section */}
+                  {cvData.summary && (
+                    <div className="mb-6">
+                      <h3 className="text-lg font-bold border-b pb-1 mb-2">Summary</h3>
+                      <p>{cvData.summary}</p>
+                    </div>
+                  )}
 
-          {/* Middle and Right Columns - CV Preview */}
-          <div className="md:col-span-2">
-            <div className="border rounded-lg shadow-sm overflow-hidden">
-              <div className="bg-blue-600 text-white p-6">
-                <h2 className="text-3xl font-bold">
-                  {cvData.personalInfo?.firstName} {cvData.personalInfo?.lastName}
-                </h2>
-                <p className="text-xl mt-1">{cvData.experience?.[0]?.title || "Professional"}</p>
-                <div className="flex flex-wrap gap-3 mt-3 text-sm">
-                  {cvData.personalInfo?.email && (
-                    <div className="flex items-center">
-                      <span className="mr-1">✉️</span>
-                      <span>{cvData.personalInfo.email}</span>
+                  {/* Experience Section */}
+                  {cvData.experience && cvData.experience.length > 0 && (
+                    <div className="mb-6">
+                      <h3 className="text-lg font-bold border-b pb-1 mb-2">Experience</h3>
+                      <div className="space-y-4">
+                        {cvData.experience.map((exp, index) => (
+                          <div key={index}>
+                            <div className="flex justify-between">
+                              <h4 className="font-semibold">{exp.title}</h4>
+                              <span className="text-sm text-gray-600">
+                                {formatDate(exp.startDate)} - {exp.isPresent ? "Present" : formatDate(exp.endDate)}
+                              </span>
+                            </div>
+                            <p className="text-gray-700">{exp.company}</p>
+                            {exp.description && <p className="mt-1 text-sm">{exp.description}</p>}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
-                  {cvData.personalInfo?.phone && (
-                    <div className="flex items-center">
-                      <span className="mr-1">📱</span>
-                      <span>{cvData.personalInfo.phone}</span>
+
+                  {/* Education Section */}
+                  {cvData.education && cvData.education.length > 0 && (
+                    <div className="mb-6">
+                      <h3 className="text-lg font-bold border-b pb-1 mb-2">Education</h3>
+                      <div className="space-y-4">
+                        {cvData.education.map((edu, index) => (
+                          <div key={index}>
+                            <div className="flex justify-between">
+                              <h4 className="font-semibold">{edu.degree}</h4>
+                              <span className="text-sm text-gray-600">
+                                {formatDate(edu.startDate)} - {edu.isPresent ? "Present" : formatDate(edu.endDate)}
+                              </span>
+                            </div>
+                            <p className="text-gray-700">{edu.school}</p>
+                            {edu.description && <p className="mt-1 text-sm">{edu.description}</p>}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
-                  {cvData.personalInfo?.location && (
-                    <div className="flex items-center">
-                      <span className="mr-1">📍</span>
-                      <span>
-                        {cvData.personalInfo.location}
-                        {cvData.personalInfo.country && `, ${cvData.personalInfo.country}`}
-                      </span>
-                    </div>
-                  )}
+
+                  {/* Additional sections would go here, similar to above */}
+                  
+                  <div className="text-center text-gray-500 text-xs mt-6">Created with Resume Builder</div>
                 </div>
-              </div>
-
-              <div className="h-[400px] p-6 overflow-y-auto scrollable">
-                {/* Summary Section */}
-                {cvData.summary && (
-                  <div className="mb-6">
-                    <h3 className="text-lg font-bold border-b pb-1 mb-2">Summary</h3>
-                    <p>{cvData.summary}</p>
-                  </div>
-                )}
-
-                {/* Experience Section */}
-                {cvData.experience && cvData.experience.length > 0 && (
-                  <div className="mb-6">
-                    <h3 className="text-lg font-bold border-b pb-1 mb-2">Experience</h3>
-                    <div className="space-y-4">
-                      {cvData.experience.map((exp, index) => (
-                        <div key={index}>
-                          <div className="flex justify-between">
-                            <h4 className="font-semibold">{exp.title}</h4>
-                            <span className="text-sm text-gray-600">
-                              {formatDate(exp.startDate)} - {exp.isPresent ? "Present" : formatDate(exp.endDate)}
-                            </span>
-                          </div>
-                          <p className="text-gray-700">{exp.company}</p>
-                          {exp.description && <p className="mt-1 text-sm">{exp.description}</p>}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Education Section */}
-                {cvData.education && cvData.education.length > 0 && (
-                  <div className="mb-6">
-                    <h3 className="text-lg font-bold border-b pb-1 mb-2">Education</h3>
-                    <div className="space-y-4">
-                      {cvData.education.map((edu, index) => (
-                        <div key={index}>
-                          <div className="flex justify-between">
-                            <h4 className="font-semibold">{edu.degree}</h4>
-                            <span className="text-sm text-gray-600">
-                              {formatDate(edu.startDate)} - {edu.isPresent ? "Present" : formatDate(edu.endDate)}
-                            </span>
-                          </div>
-                          <p className="text-gray-700">{edu.school}</p>
-                          {edu.description && <p className="mt-1 text-sm">{edu.description}</p>}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Additional sections would go here, similar to above */}
-                
-                <div className="text-center text-gray-500 text-xs mt-6">Created with Resume Builder</div>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="p-6 pt-2 border-t flex justify-end space-x-3">
+        {/* Footer with Save Button - Fixed at bottom */}
+        <div className="p-6 pt-2 border-t flex justify-end space-x-3 flex-shrink-0">
           <button 
             onClick={onClose}
             className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"

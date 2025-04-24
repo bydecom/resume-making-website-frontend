@@ -7,16 +7,17 @@ import { resumeData, cvData, templates } from './data';
 import CreateCVModal from '../../components/CreateCVModal';
 import ScrollToTop from '../Home/components/ScrollToTop';
 import { getDefaultTemplate } from '../../templates';
+import { Plus } from 'lucide-react';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [resumes, setResumes] = useState(resumeData);
+  const [cvData, setCvData] = useState({ cvs: [] });
   
   // States for CV data fetching and processing
-  const [isLoading, setIsLoading] = useState(false);
-  const [cvList, setCvList] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   
   const handleCreateNewClick = () => {
@@ -27,38 +28,48 @@ const Dashboard = () => {
     navigate(`/cv/edit/${id}`);
   };
 
-  const handleDeleteCV = (id) => {
+  const handleDeleteCV = async (id) => {
     const confirmDelete = window.confirm("Are you sure you want to delete this CV?");
     if (confirmDelete) {
-      setResumes(resumes.filter(resume => resume.id !== id));
-      
-      // Also remove from cached data
-      if (cvList.length > 0) {
-        const updatedCVs = cvList.filter(cv => (cv._id || cv.id) !== id);
-        setCvList(updatedCVs);
+      try {
+        // Get token from localStorage
+        const token = localStorage.getItem('token');
         
-        // Update sessionStorage cache
-        sessionStorage.setItem('dashboardCVData', JSON.stringify(updatedCVs));
+        if (!token) {
+          throw new Error('No authentication token found');
+        }
+
+        // Call API to delete CV
+        const response = await fetch(`http://localhost:5000/api/cv/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to delete CV: ${response.statusText}`);
+        }
+
+        // If delete successful, update the UI
+        setResumes(resumes.filter(resume => resume.id !== id));
+        setCvData(prevData => ({
+          ...prevData,
+          cvs: prevData.cvs.filter(cv => (cv._id || cv.id) !== id)
+        }));
+
+        // Show success message
+        alert('CV deleted successfully!');
+      } catch (error) {
+        console.error('Error deleting CV:', error);
+        alert('Failed to delete CV. Please try again.');
       }
     }
   };
   
-  // Fetch CV data from API without showing progress popup
+  // Fetch CV data from API
   const fetchCVData = async () => {
-    // First check if we have cached data
-    const cachedData = sessionStorage.getItem('dashboardCVData');
-    if (cachedData) {
-      try {
-        const parsedData = JSON.parse(cachedData);
-        setCvList(parsedData);
-        setIsLoading(false);
-        return;
-      } catch (err) {
-        console.error('Error parsing cached data:', err);
-        // Continue with fetching new data if cache parsing fails
-      }
-    }
-    
     setIsLoading(true);
     
     try {
@@ -92,10 +103,7 @@ const Dashboard = () => {
         progress: calculateCVProgress(cv)
       }));
       
-      setCvList(processedCVs);
-      
-      // Cache the data in sessionStorage
-      sessionStorage.setItem('dashboardCVData', JSON.stringify(processedCVs));
+      setCvData({ cvs: processedCVs });
       
     } catch (err) {
       console.error('Error fetching CV data:', err);
@@ -107,25 +115,25 @@ const Dashboard = () => {
   
   // Calculate CV score based on content completeness
   const calculateCVScore = (cv) => {
-    let score = 50; // Base score
+    let score = 0; // Base score
     
     // Check for personal info
     if (cv.personalInfo) {
-      if (cv.personalInfo.firstName && cv.personalInfo.lastName) score += 5;
-      if (cv.personalInfo.email) score += 3;
-      if (cv.personalInfo.phone) score += 3;
-      if (cv.personalInfo.location) score += 2;
-      if (cv.personalInfo.linkedin) score += 2;
+      if (cv.personalInfo.firstName && cv.personalInfo.lastName) score += 10;
+      if (cv.personalInfo.email) score += 6;
+      if (cv.personalInfo.phone) score += 6;
+      if (cv.personalInfo.location) score += 4;
+      if (cv.personalInfo.linkedin) score += 4;
     }
     
     // Check for other sections
-    if (cv.summary && cv.summary.length > 0) score += 5;
-    if (cv.experience && cv.experience.length > 0) score += 10;
-    if (cv.education && cv.education.length > 0) score += 10;
-    if (cv.skills && cv.skills.length > 0) score += 5;
-    if (cv.projects && cv.projects.length > 0) score += 5;
-    if (cv.certifications && cv.certifications.length > 0) score += 3;
-    if (cv.languages && cv.languages.length > 0) score += 2;
+    if (cv.summary && cv.summary.length > 0) score += 10;
+    if (cv.experience && cv.experience.length > 0) score += 20;
+    if (cv.education && cv.education.length > 0) score += 20;
+    if (cv.skills && cv.skills.length > 0) score += 10;
+    if (cv.projects && cv.projects.length > 0) score += 10;
+    if (cv.certifications && cv.certifications.length > 0) score += 6;
+    if (cv.languages && cv.languages.length > 0) score += 4;
     
     return Math.min(score, 100); // Ensure score is max 100
   };
@@ -156,8 +164,6 @@ const Dashboard = () => {
   useEffect(() => {
     // If we're coming from a CV edit or create operation, refresh data
     if (location.state?.message === 'CV saved successfully!' || location.state?.forceCVRefresh) {
-      // Clear cache and fetch fresh data
-      sessionStorage.removeItem('dashboardCVData');
       fetchCVData();
       
       // Clear the state to prevent continuous refresh
@@ -165,10 +171,39 @@ const Dashboard = () => {
     }
   }, [location.state]);
   
-  // Fetch CV data when component mounts (only if no cached data)
+  // Fetch CV data when component mounts
   useEffect(() => {
     fetchCVData();
   }, []);
+
+  const handleCreateNewResume = () => {
+    console.log('Current CV data:', cvData); // For debugging
+    
+    // Chuẩn bị dữ liệu CV nếu có
+    const selectedCV = cvData && cvData.cvs && cvData.cvs.length > 0 
+      ? {
+          ...cvData.cvs[0],
+          personalInfo: cvData.cvs[0].personalInfo || {},
+          summary: cvData.cvs[0].summary || '',
+          experience: cvData.cvs[0].experience || [],
+          education: cvData.cvs[0].education || [],
+          skills: cvData.cvs[0].skills || [],
+          projects: cvData.cvs[0].projects || [],
+          certifications: cvData.cvs[0].certifications || [],
+          languages: cvData.cvs[0].languages || [],
+          template: cvData.cvs[0].template || { id: getDefaultTemplate().id },
+          _id: cvData.cvs[0]._id,
+          name: cvData.cvs[0].name || 'Untitled CV',
+          progress: calculateCVProgress(cvData.cvs[0]),
+          score: calculateCVScore(cvData.cvs[0])
+        }
+      : null;
+
+    // Luôn chuyển đến new-resume, kèm theo dữ liệu CV nếu có
+    navigate('/new-resume', { 
+      state: { selectedCV }
+    });
+  };
 
   return (
     <div className="bg-gray-100">
@@ -176,14 +211,13 @@ const Dashboard = () => {
       <main className="container mx-auto px-4 md:px-6 py-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-6 mt-16">
-            <h1 className="text-3xl font-semibold text-gray-800">Dashboard</h1>
            
           </div>
           
           {/* Content sections - thêm class 'scrollable' */}
           <div className="scrollable">
             <CVSection 
-              cvData={cvList.length > 0 ? { cvs: cvList } : cvData} 
+              cvData={cvData} 
               isLoading={isLoading} 
               onEditCV={handleEditCV}
               onDeleteCV={handleDeleteCV}
@@ -202,6 +236,7 @@ const Dashboard = () => {
       
       {/* Nút scroll to top */}
       <ScrollToTop />
+
     </div>
   );
 };

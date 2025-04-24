@@ -52,11 +52,91 @@ const CVSection = ({ cvData, isLoading, onEditCV, onDeleteCV }) => {
   };
 
   const handleEditCV = (cvId) => {
-    if (onEditCV) {
-      onEditCV(cvId);
-    } else {
+    // Tìm CV cần edit từ danh sách
+    const cvToEdit = cvList.find(cv => cv._id === cvId || cv.id === cvId);
+    if (!cvToEdit) {
+      console.error('CV not found:', cvId);
+      return;
+    }
+
+    try {
+      // Chuẩn bị dữ liệu để chuyển sang EditCV
+      const cvData = {
+        personalInfo: {
+          firstName: cvToEdit.personalInfo?.firstName || '',
+          lastName: cvToEdit.personalInfo?.lastName || '',
+          email: cvToEdit.personalInfo?.email || '',
+          phone: cvToEdit.personalInfo?.phone || '',
+          location: cvToEdit.personalInfo?.location || '',
+          country: cvToEdit.personalInfo?.country || '',
+          professionalHeadline: cvToEdit.personalInfo?.professionalHeadline || '',
+          website: cvToEdit.personalInfo?.website || '',
+          linkedin: cvToEdit.personalInfo?.linkedin || '',
+          github: cvToEdit.personalInfo?.github || '',
+          twitter: cvToEdit.personalInfo?.twitter || '',
+          facebook: cvToEdit.personalInfo?.facebook || '',
+          instagram: cvToEdit.personalInfo?.instagram || '',
+          youtube: cvToEdit.personalInfo?.youtube || '',
+          tiktok: cvToEdit.personalInfo?.tiktok || '',
+          other: cvToEdit.personalInfo?.other || ''
+        },
+        summary: cvToEdit.summary || '',
+        experience: (cvToEdit.experience || []).map(exp => ({
+          title: exp.title || '',
+          company: exp.company || '',
+          location: exp.location || '',
+          startDate: exp.startDate || '',
+          endDate: exp.endDate || '',
+          isPresent: exp.isPresent || false,
+          description: exp.description || ''
+        })),
+        education: (cvToEdit.education || []).map(edu => ({
+          degree: edu.degree || '',
+          school: edu.school || '',
+          location: edu.location || '',
+          startDate: edu.startDate || '',
+          endDate: edu.endDate || '',
+          isPresent: edu.isPresent || false,
+          description: edu.description || ''
+        })),
+        skills: cvToEdit.skills || [],
+        projects: (cvToEdit.projects || []).map(proj => ({
+          title: proj.title || '',
+          description: proj.description || '',
+          url: proj.url || '',
+          startDate: proj.startDate || '',
+          endDate: proj.endDate || '',
+          isPresent: proj.isPresent || false
+        })),
+        certifications: (cvToEdit.certifications || []).map(cert => ({
+          name: cert.name || '',
+          issuer: cert.issuer || '',
+          issueDate: cert.issueDate || '',
+          expiryDate: cert.expiryDate || '',
+          credentialId: cert.credentialId || '',
+          credentialUrl: cert.credentialUrl || ''
+        })),
+        languages: (cvToEdit.languages || []).map(lang => ({
+          language: lang.language || '',
+          proficiency: lang.proficiency || ''
+        })),
+        template: cvToEdit.template || { id: getDefaultTemplate().id },
+        // Thêm các trường cần thiết cho việc update
+        _id: cvToEdit._id || cvToEdit.id,
+        name: cvToEdit.name || 'Untitled CV',
+        progress: cvToEdit.progress || 0,
+        score: cvToEdit.score || 0
+      };
+
+      // Lưu dữ liệu vào localStorage để EditCV có thể truy cập
+      localStorage.setItem('editingCV', JSON.stringify(cvData));
+
+      // Chuyển hướng đến trang EditCV
       window.hideHeader = true;
-      navigate(`/edit-cv/${cvId}`);
+      navigate(`/edit-cv/${cvToEdit._id || cvToEdit.id}`);
+    } catch (error) {
+      console.error('Error preparing CV data:', error);
+      // Có thể thêm thông báo lỗi cho người dùng ở đây
     }
   };
   
@@ -90,17 +170,10 @@ const CVSection = ({ cvData, isLoading, onEditCV, onDeleteCV }) => {
     <section className="max-w-6xl mx-auto mb-12">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-3xl font-bold text-gray-800">Your CV Collection</h2>
-          <p className="text-gray-500 mt-2">Manage and create professional resumes for your job applications</p>
+          <h2 className="text-3xl font-bold text-gray-800">Your CV</h2>
+          <p className="text-gray-500 mt-2">Share the journey of your life — and we'll help you write the next chapter</p>
         </div>
-        <button
-          onClick={handleCreateNewCV}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center"
-        >
-          <Plus className="w-5 h-5 mr-2" />
-          Create New CV
-        </button>
-      </div>
+      </div>  
 
       {/* Display loading skeleton if loading */}
       {isLoading ? (
@@ -148,8 +221,8 @@ const CVSection = ({ cvData, isLoading, onEditCV, onDeleteCV }) => {
         // Display empty state when no CVs
         <div className="bg-white rounded-lg border border-gray-200 shadow-md p-8 text-center">
           <FileText className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-          <h3 className="text-xl font-semibold text-gray-800 mb-2">No CVs Found</h3>
-          <p className="text-gray-500 mb-6">You haven't created any CVs yet. Get started by creating your first professional CV.</p>
+          <h3 className="text-xl font-semibold text-gray-800 mb-2">No CVs Yet</h3>
+          <p className="text-gray-500 mb-6">You haven't shared your story with us. Let's create your first professional CV and get things rolling!</p>
           <button
             onClick={handleCreateNewCV}
             className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md"
@@ -160,7 +233,7 @@ const CVSection = ({ cvData, isLoading, onEditCV, onDeleteCV }) => {
         </div>
       ) : (
         // Display actual CV list
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {cvList.map((cv) => (
             <div key={cv._id || cv.id} className="bg-white rounded-lg border border-gray-200 shadow-md overflow-hidden group hover:shadow-lg transition-all duration-200">
               <div className="p-5 flex items-start justify-between border-b border-gray-100">
@@ -168,7 +241,7 @@ const CVSection = ({ cvData, isLoading, onEditCV, onDeleteCV }) => {
                   <h3 className="font-semibold text-lg text-gray-800">{cv.name || 'Untitled CV'}</h3>
                   <p className="text-sm text-gray-500 mt-1">
                     {cv.personalInfo?.firstName} {cv.personalInfo?.lastName || ''}
-                    {cv.personalInfo?.headline && ` • ${cv.personalInfo.headline}`}
+                    {cv.personalInfo?.professionalHeadline && ` • ${cv.personalInfo.professionalHeadline}`}
                   </p>
 
                   {/* Resume Score */}
@@ -197,7 +270,7 @@ const CVSection = ({ cvData, isLoading, onEditCV, onDeleteCV }) => {
                 </div>
                 <div className="relative">
                   <button 
-                    className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                    className="rounded-full hover:bg-gray-100 transition-colors"
                     onClick={() => toggleMenu(cv._id || cv.id)}
                   >
                     <MoreVertical className="h-5 w-5 text-gray-500" />
@@ -220,10 +293,6 @@ const CVSection = ({ cvData, isLoading, onEditCV, onDeleteCV }) => {
                         >
                           <Edit className="h-4 w-4" />
                           Edit
-                        </button>
-                        <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2">
-                          <Copy className="h-4 w-4" />
-                          Duplicate
                         </button>
                         <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2">
                           <Download className="h-4 w-4" />

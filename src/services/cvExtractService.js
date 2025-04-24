@@ -55,6 +55,7 @@ class CVExtractService {
           // Đảm bảo các trường cần thiết đều có
           firstName: extractedData.personalInfo?.firstName || '',
           lastName: extractedData.personalInfo?.lastName || '',
+          professionalHeadline: extractedData.personalInfo?.professionalHeadline || '',
           email: extractedData.personalInfo?.email || '',
           phone: extractedData.personalInfo?.phone || '',
           location: extractedData.personalInfo?.location || '',

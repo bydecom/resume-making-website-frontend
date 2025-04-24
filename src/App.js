@@ -18,6 +18,8 @@ import AdminRegister from './pages/AdminRegister';
 import NotFound from './pages/NotFound';
 import Unauthorized from './pages/Unauthorized';
 import NewCV from './pages/NewCV';
+import EditCV from './pages/EditCV';
+import NewResume from './pages/NewResume';
 // Import Admin sub-pages
 import AdminDashboard from './pages/Admin/Dashboard';
 import AllUsers from './pages/Admin/Users/AllUsers';
@@ -62,6 +64,21 @@ const ProtectedRoute = ({ children, allowedRole }) => {
   return children;
 };
 
+// ScrollToTop component
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+
+  React.useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: 'instant'
+    });
+  }, [pathname]);
+
+  return null;
+};
+
 // Layout Component
 const Layout = ({ children }) => {
   const location = useLocation();
@@ -70,7 +87,9 @@ const Layout = ({ children }) => {
     '/register', 
     '/admin-register', 
     '/unauthorized',
-    '/new-cv'
+    '/new-cv',
+    '/edit-cv',
+    '/new-resume'
   ];
   
   // Check if the current path is an admin route
@@ -98,6 +117,7 @@ const Layout = ({ children }) => {
 const AppRoutes = () => {
   return (
     <Layout>
+      <ScrollToTop />
       <Routes>
         {/* Public Routes */}
         <Route path="/login" element={<Auth />} />
@@ -151,6 +171,22 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute>
               <NewCV />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/edit-cv/:cvId" 
+          element={
+            <ProtectedRoute>
+              <EditCV />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/new-resume" 
+          element={
+            <ProtectedRoute>
+              <NewResume />
             </ProtectedRoute>
           } 
         />

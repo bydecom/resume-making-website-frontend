@@ -48,7 +48,7 @@ const MinimalistTemplate = ({ formData }) => {
         </h1>
         
         <p className="text-sm text-gray-600 my-2 cv-long-text">
-          {personalInfo?.headline || 'Professional Title'}
+          {personalInfo?.professionalHeadline || 'Professional Title'}
         </p>
         
         {/* Contact Info */}
