@@ -221,6 +221,7 @@ const Dashboard = () => {
               isLoading={isLoading} 
               onEditCV={handleEditCV}
               onDeleteCV={handleDeleteCV}
+              setCvData={setCvData}
             />
             <ResumesSection resumeData={resumes} />
             <TemplatesSection templates={templates} />

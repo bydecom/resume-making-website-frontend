@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axiosInstance from '../../../../utils/axios';
 
 const JobDescriptionScanningPreview = ({ isOpen, onComplete, data }) => {
   const [progress, setProgress] = useState(0);
@@ -7,24 +8,26 @@ const JobDescriptionScanningPreview = ({ isOpen, onComplete, data }) => {
   const [editingField, setEditingField] = useState(null);
   const [editedData, setEditedData] = useState(null);
   const [tempEditData, setTempEditData] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
 
   const scanSteps = [
     {
       id: 'basic',
       label: 'Basic Information',
-      fields: ['title', 'company', 'location', 'jobType'],
+      fields: ['position', 'companyName', 'location', 'employmentType', 'jobLevel'],
       status: 'pending'
     },
     {
       id: 'details',
       label: 'Job Details',
-      fields: ['description', 'requirements', 'responsibilities'],
+      fields: ['summary', 'responsibilities', 'requirements'],
       status: 'pending'
     },
     {
-      id: 'benefits',
-      label: 'Benefits & Compensation',
-      fields: ['benefits', 'salary'],
+      id: 'skills',
+      label: 'Skills & Benefits',
+      fields: ['keywords', 'benefits', 'salary'],
       status: 'pending'
     },
     {
@@ -43,7 +46,14 @@ const JobDescriptionScanningPreview = ({ isOpen, onComplete, data }) => {
 
   useEffect(() => {
     if (data) {
-      setEditedData(data);
+      // Transform incoming data if needed
+      const transformedData = {
+        ...data,
+        skillsRequired: data.keywords || [], // Map keywords to skillsRequired
+        closingDate: data.applicationDeadline, // Map applicationDeadline to closingDate for backend
+        experienceRequired: data.experienceRequired || {}
+      };
+      setEditedData(transformedData);
     }
   }, [data]);
 
@@ -106,390 +116,338 @@ const JobDescriptionScanningPreview = ({ isOpen, onComplete, data }) => {
     });
   };
 
+  const handleAddArrayItem = (fieldName) => {
+    const currentArray = editedData[fieldName] || [];
+    // Chỉ thêm mới nếu item cuối cùng không trống
+    if (currentArray.length === 0 || currentArray[currentArray.length - 1].trim() !== '') {
+      handleInputChange(fieldName, [...currentArray, '']);
+    }
+  };
+
+  const handleArrayItemChange = (fieldName, index, value) => {
+    const currentArray = [...(editedData[fieldName] || [])];
+    currentArray[index] = value;
+    // Lọc bỏ các giá trị trống khi lưu
+    handleInputChange(fieldName, currentArray.filter(item => item.trim() !== ''));
+  };
+
+  const handleRemoveArrayItem = (fieldName, index) => {
+    const currentArray = editedData[fieldName] || [];
+    const newArray = currentArray.filter((_, i) => i !== index);
+    handleInputChange(fieldName, newArray);
+  };
+
   const handleBlur = () => {
     setEditingField(null);
   };
 
-  const handleConfirm = () => {
-    onComplete(editedData);
+  const handleConfirm = async () => {
+    try {
+      const savedJD = await saveJobDescription(editedData);
+      onComplete({
+        ...editedData,
+        _id: savedJD._id
+      });
+    } catch (error) {
+      console.error('Failed to process job description:', error);
+    }
   };
 
-  const renderPreview = () => {
-    if (!editedData) return null;
+  const saveJobDescription = async (jdData) => {
+    try {
+      setIsSaving(true);
+      setSaveError(null);
+      
+      // Transform data to match backend schema
+      const requestData = {
+        position: jdData.position || '',
+        department: jdData.department || '',
+        companyName: jdData.companyName || '',
+        location: jdData.location || [],
+        remoteStatus: (jdData.remoteStatus === 'onsite' ? 'On-site' : 
+                      jdData.remoteStatus === 'remote' ? 'Remote' : 
+                      jdData.remoteStatus === 'hybrid' ? 'Hybrid' : 'On-site'),
+        experienceRequired: {
+          min: jdData.experienceRequired?.min || 0,
+          max: jdData.experienceRequired?.max || 0,
+          description: jdData.experienceRequired?.description || ''
+        },
+        jobLevel: jdData.jobLevel || 'Mid',
+        employmentType: jdData.employmentType || 'Full-time',
+        summary: jdData.summary ? [jdData.summary] : [],
+        responsibilities: jdData.responsibilities || [],
+        requirements: jdData.requirements || [],
+        preferredQualifications: [],
+        skillsRequired: jdData.keywords || [],
+        benefits: jdData.benefits || [],
+        salary: {
+          min: jdData.salary?.min || 0,
+          max: jdData.salary?.max || 0,
+          currency: jdData.salary?.currency || 'VND',
+          period: jdData.salary?.period || 'Monthly'
+        },
+        applicationDeadline: jdData.applicationDeadline || '',
+        contactInfo: {
+          name: jdData.contactInfo?.name || 'N/A',
+          email: jdData.contactInfo?.email || 'N/A',
+          phone: jdData.contactInfo?.phone || 'N/A'
+        },
+        language: 'en',
+        status: 'draft',
+        tags: ['auto-generated']
+      };
+      
+      const response = await axiosInstance.post('/api/job-descriptions', requestData);
+      return response.data.data;
+    } catch (error) {
+      setSaveError(error.message);
+      throw error;
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
-    return (
-      <>
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold">Review Job Description</h2>
-          <button
-            onClick={() => setShowPreview(false)}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        <div className="space-y-6">
-          {/* Basic Information */}
-          <div className="bg-white rounded-lg border p-4">
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="text-lg font-medium">Basic Information</h3>
-              {editingField === 'basic' ? (
-                <div className="space-x-2">
-                  <button
-                    onClick={() => handleCancel('basic')}
-                    className="text-gray-600 hover:text-gray-700 text-sm"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => handleSave('basic')}
-                    className="text-green-600 hover:text-green-700 text-sm font-medium"
-                  >
-                    Save
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => handleEditClick('basic')}
-                  className="text-blue-600 hover:text-blue-700 text-sm"
-                >
-                  Edit
-                </button>
-              )}
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm text-gray-600">Job Title</label>
-                {editingField === 'title' ? (
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500"
-                    value={editedData.title || ''}
-                    onChange={(e) => handleInputChange('title', e.target.value)}
-                    onBlur={handleBlur}
-                    autoFocus
-                  />
-                ) : (
-                  <p 
-                    className="font-medium cursor-pointer hover:bg-gray-50 p-1 rounded"
-                    onClick={() => handleEditClick('title')}
-                  >
-                    {editedData.title || 'N/A'}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label className="text-sm text-gray-600">Company</label>
-                {editingField === 'company' ? (
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500"
-                    value={editedData.company || ''}
-                    onChange={(e) => handleInputChange('company', e.target.value)}
-                    onBlur={handleBlur}
-                    autoFocus
-                  />
-                ) : (
-                  <p 
-                    className="font-medium cursor-pointer hover:bg-gray-50 p-1 rounded"
-                    onClick={() => handleEditClick('company')}
-                  >
-                    {editedData.company || 'N/A'}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label className="text-sm text-gray-600">Location</label>
-                {editingField === 'location' ? (
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500"
-                    value={editedData.location || ''}
-                    onChange={(e) => handleInputChange('location', e.target.value)}
-                    onBlur={handleBlur}
-                    autoFocus
-                  />
-                ) : (
-                  <p 
-                    className="font-medium cursor-pointer hover:bg-gray-50 p-1 rounded"
-                    onClick={() => handleEditClick('location')}
-                  >
-                    {editedData.location || 'N/A'}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label className="text-sm text-gray-600">Job Type</label>
-                {editingField === 'jobType' ? (
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500"
-                    value={editedData.jobType || ''}
-                    onChange={(e) => handleInputChange('jobType', e.target.value)}
-                    onBlur={handleBlur}
-                    autoFocus
-                  />
-                ) : (
-                  <p 
-                    className="font-medium cursor-pointer hover:bg-gray-50 p-1 rounded"
-                    onClick={() => handleEditClick('jobType')}
-                  >
-                    {editedData.jobType || 'N/A'}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Description */}
-          {editedData.description && (
-            <div className="bg-white rounded-lg border p-4">
-              <div className="flex justify-between items-center mb-3">
-                <h3 className="text-lg font-medium">Description</h3>
-                {editingField === 'description' ? (
-                  <div className="space-x-2">
-                    <button
-                      onClick={() => handleCancel('description')}
-                      className="text-gray-600 hover:text-gray-700 text-sm"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={() => handleSave('description')}
-                      className="text-green-600 hover:text-green-700 text-sm font-medium"
-                    >
-                      Save
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => handleEditClick('description')}
-                    className="text-blue-600 hover:text-blue-700 text-sm"
-                  >
-                    Edit
-                  </button>
-                )}
-              </div>
-              {editingField === 'description' ? (
-                <textarea
+  const renderBasicInformation = () => (
+    <div className="bg-white rounded-lg border p-4">
+      <h3 className="text-xl font-semibold text-gray-800 mb-4">Basic Information</h3>
+      <div className="grid grid-cols-2 gap-4">
+        {/* Position */}
+        <div>
+          <label className="text-sm font-medium text-gray-600 mb-1 block">Position</label>
+          <div className="relative">
+            {editingField === 'position' ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
                   className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500"
-                  value={editedData.description}
-                  onChange={(e) => handleInputChange('description', e.target.value)}
-                  onBlur={handleBlur}
-                  rows={6}
+                  value={editedData.position || ''}
+                  onChange={(e) => handleInputChange('position', e.target.value)}
                   autoFocus
                 />
-              ) : (
-                <p 
-                  className="text-gray-700 whitespace-pre-line cursor-pointer hover:bg-gray-50 p-2 rounded"
-                  onClick={() => handleEditClick('description')}
-                >
-                  {editedData.description}
-                </p>
-              )}
-            </div>
-          )}
-
-          {/* Requirements */}
-          {editedData.requirements?.length > 0 && (
-            <div className="bg-white rounded-lg border p-4">
-              <div className="flex justify-between items-center mb-3">
-                <h3 className="text-lg font-medium">Requirements</h3>
-                {editingField === 'requirements' ? (
-                  <div className="space-x-2">
-                    <button
-                      onClick={() => handleCancel('requirements')}
-                      className="text-gray-600 hover:text-gray-700 text-sm"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={() => handleSave('requirements')}
-                      className="text-green-600 hover:text-green-700 text-sm font-medium"
-                    >
-                      Save
-                    </button>
-                  </div>
-                ) : (
+                <div className="flex gap-1">
                   <button
-                    onClick={() => handleEditClick('requirements')}
-                    className="text-blue-600 hover:text-blue-700 text-sm"
+                    onClick={() => handleSave('position')}
+                    className="text-green-600 hover:text-green-700 p-1"
+                    title="Save"
                   >
-                    Edit
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
                   </button>
-                )}
+                  <button
+                    onClick={() => handleCancel('position')}
+                    className="text-red-600 hover:text-red-700 p-1"
+                    title="Cancel"
+                  >
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
               </div>
-              {editingField === 'requirements' ? (
-                <div className="space-y-2">
-                  {editedData.requirements.map((req, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        className="flex-1 px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500"
-                        value={req}
-                        onChange={(e) => {
-                          const newReqs = [...editedData.requirements];
-                          newReqs[index] = e.target.value;
-                          handleInputChange('requirements', newReqs);
-                        }}
-                      />
-                      <button
-                        onClick={() => {
-                          const newReqs = editedData.requirements.filter((_, i) => i !== index);
-                          handleInputChange('requirements', newReqs);
-                        }}
-                        className="text-red-500 hover:text-red-600"
-                      >
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
-                  ))}
-                  <button
-                    onClick={() => {
-                      handleInputChange('requirements', [...editedData.requirements, '']);
-                    }}
-                    className="text-blue-600 hover:text-blue-700 text-sm"
-                  >
-                    + Add Requirement
-                  </button>
-                </div>
-              ) : (
-                <ul className="list-disc list-inside space-y-1">
-                  {editedData.requirements.map((req, index) => (
-                    <li key={index} className="text-gray-700">{req}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          )}
-
-          {/* Responsibilities */}
-          {editedData.responsibilities?.length > 0 && (
-            <div className="bg-white rounded-lg border p-4">
-              <div className="flex justify-between items-center mb-3">
-                <h3 className="text-lg font-medium">Responsibilities</h3>
-                {editingField === 'responsibilities' ? (
-                  <div className="space-x-2">
-                    <button
-                      onClick={() => handleCancel('responsibilities')}
-                      className="text-gray-600 hover:text-gray-700 text-sm"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={() => handleSave('responsibilities')}
-                      className="text-green-600 hover:text-green-700 text-sm font-medium"
-                    >
-                      Save
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => handleEditClick('responsibilities')}
-                    className="text-blue-600 hover:text-blue-700 text-sm"
-                  >
-                    Edit
-                  </button>
-                )}
-              </div>
-              {editingField === 'responsibilities' ? (
-                <div className="space-y-2">
-                  {editedData.responsibilities.map((resp, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        className="flex-1 px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500"
-                        value={resp}
-                        onChange={(e) => {
-                          const newResps = [...editedData.responsibilities];
-                          newResps[index] = e.target.value;
-                          handleInputChange('responsibilities', newResps);
-                        }}
-                      />
-                      <button
-                        onClick={() => {
-                          const newResps = editedData.responsibilities.filter((_, i) => i !== index);
-                          handleInputChange('responsibilities', newResps);
-                        }}
-                        className="text-red-500 hover:text-red-600"
-                      >
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
-                  ))}
-                  <button
-                    onClick={() => {
-                      handleInputChange('responsibilities', [...editedData.responsibilities, '']);
-                    }}
-                    className="text-blue-600 hover:text-blue-700 text-sm"
-                  >
-                    + Add Responsibility
-                  </button>
-                </div>
-              ) : (
-                <ul className="list-disc list-inside space-y-1">
-                  {editedData.responsibilities.map((resp, index) => (
-                    <li key={index} className="text-gray-700">{resp}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          )}
-
-          {/* Benefits & Compensation */}
-          <div className="bg-white rounded-lg border p-4">
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="text-lg font-medium">Benefits & Compensation</h3>
-              {editingField === 'benefits' ? (
-                <div className="space-x-2">
-                  <button
-                    onClick={() => handleCancel('benefits')}
-                    className="text-gray-600 hover:text-gray-700 text-sm"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => handleSave('benefits')}
-                    className="text-green-600 hover:text-green-700 text-sm font-medium"
-                  >
-                    Save
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => handleEditClick('benefits')}
-                  className="text-blue-600 hover:text-blue-700 text-sm"
-                >
-                  Edit
+            ) : (
+              <div 
+                className="flex justify-between items-center group cursor-pointer p-2 hover:bg-gray-50 rounded-lg"
+                onClick={() => handleEditClick('position')}
+              >
+                <p className="font-medium">{editedData.position || 'N/A'}</p>
+                <button className="text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" 
+                    />
+                  </svg>
                 </button>
-              )}
-            </div>
-            {editingField === 'benefits' ? (
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Company Name */}
+        <div>
+          <label className="text-sm font-medium text-gray-600 mb-1 block">Company</label>
+          <div className="relative">
+            {editingField === 'companyName' ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500"
+                  value={editedData.companyName || ''}
+                  onChange={(e) => handleInputChange('companyName', e.target.value)}
+                  autoFocus
+                />
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => handleSave('companyName')}
+                    className="text-green-600 hover:text-green-700 p-1"
+                    title="Save"
+                  >
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => handleCancel('companyName')}
+                    className="text-red-600 hover:text-red-700 p-1"
+                    title="Cancel"
+                  >
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div 
+                className="flex justify-between items-center group cursor-pointer p-2 hover:bg-gray-50 rounded-lg"
+                onClick={() => handleEditClick('companyName')}
+              >
+                <p className="font-medium">{editedData.companyName || 'N/A'}</p>
+                <button className="text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" 
+                    />
+                  </svg>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Job Level */}
+        <div>
+          <label className="text-sm font-medium text-gray-600 mb-1 block">Job Level</label>
+          <div className="relative">
+            {editingField === 'jobLevel' ? (
+              <div className="flex items-center gap-2">
+                <select
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500"
+                  value={editedData.jobLevel || 'Mid'}
+                  onChange={(e) => handleInputChange('jobLevel', e.target.value)}
+                  autoFocus
+                >
+                  <option value="Intern">Intern</option>
+                  <option value="Junior">Junior</option>
+                  <option value="Mid">Mid</option>
+                  <option value="Senior">Senior</option>
+                  <option value="Lead">Lead</option>
+                  <option value="Manager">Manager</option>
+                  <option value="Director">Director</option>
+                  <option value="Executive">Executive</option>
+                </select>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => handleSave('jobLevel')}
+                    className="text-green-600 hover:text-green-700 p-1"
+                    title="Save"
+                  >
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => handleCancel('jobLevel')}
+                    className="text-red-600 hover:text-red-700 p-1"
+                    title="Cancel"
+                  >
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div 
+                className="flex justify-between items-center group cursor-pointer p-2 hover:bg-gray-50 rounded-lg"
+                onClick={() => handleEditClick('jobLevel')}
+              >
+                <p className="font-medium capitalize">{editedData.jobLevel || 'Mid'}</p>
+                <button className="text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" 
+                    />
+                  </svg>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Employment Type */}
+        <div>
+          <label className="text-sm font-medium text-gray-600 mb-1 block">Employment Type</label>
+          <div className="relative">
+            {editingField === 'employmentType' ? (
+              <div className="flex items-center gap-2">
+                <select
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500"
+                  value={editedData.employmentType || 'Full-time'}
+                  onChange={(e) => handleInputChange('employmentType', e.target.value)}
+                  autoFocus
+                >
+                  <option value="Full-time">Full-time</option>
+                  <option value="Part-time">Part-time</option>
+                  <option value="Contract">Contract</option>
+                  <option value="Internship">Internship</option>
+                  <option value="Freelance">Freelance</option>
+                </select>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => handleSave('employmentType')}
+                    className="text-green-600 hover:text-green-700 p-1"
+                    title="Save"
+                  >
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => handleCancel('employmentType')}
+                    className="text-red-600 hover:text-red-700 p-1"
+                    title="Cancel"
+                  >
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div 
+                className="flex justify-between items-center group cursor-pointer p-2 hover:bg-gray-50 rounded-lg"
+                onClick={() => handleEditClick('employmentType')}
+              >
+                <p className="font-medium capitalize">{editedData.employmentType || 'Full-time'}</p>
+                <button className="text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" 
+                    />
+                  </svg>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Location */}
+        <div>
+          <label className="text-sm font-medium text-gray-600 mb-1 block">Locations</label>
+          <div className="relative">
+            {editingField === 'location' ? (
               <div className="space-y-2">
-                {editedData.benefits.map((benefit, index) => (
+                {(editedData.location || []).map((loc, index) => (
                   <div key={index} className="flex items-center gap-2">
                     <input
                       type="text"
                       className="flex-1 px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500"
-                      value={benefit}
-                      onChange={(e) => {
-                        const newBenefits = [...editedData.benefits];
-                        newBenefits[index] = e.target.value;
-                        handleInputChange('benefits', newBenefits);
-                      }}
+                      value={loc}
+                      onChange={(e) => handleArrayItemChange('location', index, e.target.value)}
                     />
                     <button
-                      onClick={() => {
-                        const newBenefits = editedData.benefits.filter((_, i) => i !== index);
-                        handleInputChange('benefits', newBenefits);
-                      }}
+                      onClick={() => handleRemoveArrayItem('location', index)}
                       className="text-red-500 hover:text-red-600"
                     >
                       <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -499,348 +457,463 @@ const JobDescriptionScanningPreview = ({ isOpen, onComplete, data }) => {
                   </div>
                 ))}
                 <button
-                  onClick={() => {
-                    handleInputChange('benefits', [...editedData.benefits, '']);
-                  }}
+                  onClick={() => handleAddArrayItem('location')}
                   className="text-blue-600 hover:text-blue-700 text-sm"
                 >
-                  + Add Benefit
+                  + Add Location
                 </button>
+                <div className="flex justify-end gap-2 mt-4">
+                  <button onClick={() => handleCancel('location')} className="text-red-600 hover:text-red-700 text-sm">Cancel</button>
+                  <button onClick={() => handleSave('location')} className="text-green-600 hover:text-green-700 text-sm font-medium">Save</button>
+                </div>
               </div>
             ) : (
-              <div>
-                <h4 className="text-sm text-gray-600 mb-2">Benefits</h4>
-                <ul className="list-disc list-inside space-y-1">
-                  {editedData.benefits.map((benefit, index) => (
-                    <li key={index} className="text-gray-700">{benefit}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-
-          {/* Salary */}
-          {editedData.salary && (
-            <div className="bg-white rounded-lg border p-4">
-              <div className="flex justify-between items-center mb-3">
-                <h3 className="text-lg font-medium">Salary</h3>
-                {editingField === 'salary' ? (
-                  <div className="space-x-2">
-                    <button
-                      onClick={() => handleCancel('salary')}
-                      className="text-gray-600 hover:text-gray-700 text-sm"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={() => handleSave('salary')}
-                      className="text-green-600 hover:text-green-700 text-sm font-medium"
-                    >
-                      Save
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => handleEditClick('salary')}
-                    className="text-blue-600 hover:text-blue-700 text-sm"
-                  >
-                    Edit
-                  </button>
-                )}
-              </div>
-              {editingField === 'salary' ? (
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm text-gray-600">Minimum Salary</label>
-                    <input
-                      type="text"
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500"
-                      value={editedData.salary.min?.toLocaleString()}
-                      onChange={(e) => handleInputChange('salary.min', e.target.value)}
-                      onBlur={handleBlur}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-600">Maximum Salary</label>
-                    <input
-                      type="text"
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500"
-                      value={editedData.salary.max?.toLocaleString()}
-                      onChange={(e) => handleInputChange('salary.max', e.target.value)}
-                      onBlur={handleBlur}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-600">Currency</label>
-                    <input
-                      type="text"
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500"
-                      value={editedData.salary.currency}
-                      onChange={(e) => handleInputChange('salary.currency', e.target.value)}
-                      onBlur={handleBlur}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-600">Period</label>
-                    <input
-                      type="text"
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500"
-                      value={editedData.salary.period}
-                      onChange={(e) => handleInputChange('salary.period', e.target.value)}
-                      onBlur={handleBlur}
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div className="mb-4">
-                  <h4 className="text-sm text-gray-600 mb-2">Salary</h4>
-                  <p className="font-medium">
-                    {editedData.salary.min?.toLocaleString()} 
-                    {editedData.salary.max && ` - ${editedData.salary.max.toLocaleString()}`} 
-                    {editedData.salary.currency} per {editedData.salary.period}
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Keywords */}
-          {editedData.keywords?.length > 0 && (
-            <div className="bg-white rounded-lg border p-4">
-              <div className="flex justify-between items-center mb-3">
-                <h3 className="text-lg font-medium">Required Skills</h3>
-                {editingField === 'keywords' ? (
-                  <div className="space-x-2">
-                    <button
-                      onClick={() => handleCancel('keywords')}
-                      className="text-gray-600 hover:text-gray-700 text-sm"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={() => handleSave('keywords')}
-                      className="text-green-600 hover:text-green-700 text-sm font-medium"
-                    >
-                      Save
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => handleEditClick('keywords')}
-                    className="text-blue-600 hover:text-blue-700 text-sm"
-                  >
-                    Edit
-                  </button>
-                )}
-              </div>
-              {editingField === 'keywords' ? (
-                <div className="space-y-3">
-                  <div className="flex flex-wrap gap-2">
-                    {editedData.keywords.map((skill, index) => (
-                      <div 
-                        key={index}
-                        className="flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
-                      >
-                        <span>{skill}</span>
-                        <button
-                          onClick={() => {
-                            const newSkills = editedData.keywords.filter((_, i) => i !== index);
-                            handleInputChange('keywords', newSkills);
-                          }}
-                          className="ml-2 text-blue-600 hover:text-blue-800"
-                        >
-                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      placeholder="Add a new skill"
-                      className="flex-1 px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500"
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter' && e.target.value.trim()) {
-                          const newSkills = [...(editedData.keywords || []), e.target.value.trim()];
-                          handleInputChange('keywords', newSkills);
-                          e.target.value = '';
-                        }
-                      }}
-                    />
-                    <button
-                      onClick={() => {
-                        const input = document.querySelector('input[placeholder="Add a new skill"]');
-                        if (input.value.trim()) {
-                          const newSkills = [...(editedData.keywords || []), input.value.trim()];
-                          handleInputChange('keywords', newSkills);
-                          input.value = '';
-                        }
-                      }}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                    >
-                      Add
-                    </button>
-                  </div>
-                </div>
-              ) : (
+              <div 
+                className="flex justify-between items-center group cursor-pointer p-2 hover:bg-gray-50 rounded-lg"
+                onClick={() => handleEditClick('location')}
+              >
                 <div className="flex flex-wrap gap-2">
-                  {editedData.keywords.map((skill, index) => (
-                    <span
-                      key={index}
-                      className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
-                    >
-                      {skill}
-                    </span>
-                  ))}
+                  {(editedData.location || []).length > 0 ? (
+                    editedData.location.map((loc, index) => (
+                      <span key={index} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                        {loc}
+                      </span>
+                    ))
+                  ) : (
+                    <p className="text-gray-500">No locations specified</p>
+                  )}
                 </div>
-              )}
-            </div>
-          )}
-
-          {/* Additional Information */}
-          <div className="bg-white rounded-lg border p-4">
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="text-lg font-medium">Additional Information</h3>
-              {editingField === 'additional' ? (
-                <div className="space-x-2">
-                  <button
-                    onClick={() => handleCancel('additional')}
-                    className="text-gray-600 hover:text-gray-700 text-sm"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => handleSave('additional')}
-                    className="text-green-600 hover:text-green-700 text-sm font-medium"
-                  >
-                    Save
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => handleEditClick('additional')}
-                  className="text-blue-600 hover:text-blue-700 text-sm"
-                >
-                  Edit
-                </button>
-              )}
-            </div>
-            {editingField === 'additional' ? (
-              <div className="space-y-4">
-                {editedData.applicationDeadline && (
-                  <div>
-                    <label className="text-sm text-gray-600">Application Deadline</label>
-                    <input
-                      type="text"
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500"
-                      value={editedData.applicationDeadline}
-                      onChange={(e) => handleInputChange('applicationDeadline', e.target.value)}
-                      onBlur={handleBlur}
+                <button className="text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" 
                     />
-                  </div>
-                )}
-                {editedData.contactInfo && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {editedData.contactInfo.name && (
-                      <div>
-                        <label className="text-sm text-gray-600">Contact Person</label>
-                        <input
-                          type="text"
-                          className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500"
-                          value={editedData.contactInfo.name}
-                          onChange={(e) => handleInputChange('contactInfo.name', e.target.value)}
-                          onBlur={handleBlur}
-                        />
-                      </div>
-                    )}
-                    {editedData.contactInfo.email && (
-                      <div>
-                        <label className="text-sm text-gray-600">Email</label>
-                        <input
-                          type="text"
-                          className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500"
-                          value={editedData.contactInfo.email}
-                          onChange={(e) => handleInputChange('contactInfo.email', e.target.value)}
-                          onBlur={handleBlur}
-                        />
-                      </div>
-                    )}
-                    {editedData.contactInfo.phone && (
-                      <div>
-                        <label className="text-sm text-gray-600">Phone</label>
-                        <input
-                          type="text"
-                          className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500"
-                          value={editedData.contactInfo.phone}
-                          onChange={(e) => handleInputChange('contactInfo.phone', e.target.value)}
-                          onBlur={handleBlur}
-                        />
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {editedData.applicationDeadline && (
-                  <div>
-                    <label className="text-sm text-gray-600">Application Deadline</label>
-                    <p className="font-medium">
-                      {(() => {
-                        const [day, month, year] = editedData.applicationDeadline.split('/');
-                        const date = new Date(+year, +month - 1, +day);
-                        return date.toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        });
-                      })()}
-                    </p>
-                  </div>
-                )}
-                {editedData.contactInfo && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {editedData.contactInfo.name && (
-                      <div>
-                        <label className="text-sm text-gray-600">Contact Person</label>
-                        <p className="font-medium">{editedData.contactInfo.name}</p>
-                      </div>
-                    )}
-                    {editedData.contactInfo.email && (
-                      <div>
-                        <label className="text-sm text-gray-600">Email</label>
-                        <p className="font-medium">{editedData.contactInfo.email}</p>
-                      </div>
-                    )}
-                    {editedData.contactInfo.phone && (
-                      <div>
-                        <label className="text-sm text-gray-600">Phone</label>
-                        <p className="font-medium">{editedData.contactInfo.phone}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
+                  </svg>
+                </button>
               </div>
             )}
           </div>
         </div>
 
-        {/* Action Buttons */}
+        {/* Remote Status */}
+        <div>
+          <label className="text-sm font-medium text-gray-600 mb-1 block">Remote Status</label>
+          <div className="relative">
+            {editingField === 'remoteStatus' ? (
+              <div className="flex items-center gap-2">
+                <select
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500"
+                  value={editedData.remoteStatus || 'On-site'}
+                  onChange={(e) => handleInputChange('remoteStatus', e.target.value)}
+                  autoFocus
+                >
+                  <option value="On-site">On-site</option>
+                  <option value="Hybrid">Hybrid</option>
+                  <option value="Remote">Remote</option>
+                </select>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => handleSave('remoteStatus')}
+                    className="text-green-600 hover:text-green-700 p-1"
+                    title="Save"
+                  >
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => handleCancel('remoteStatus')}
+                    className="text-red-600 hover:text-red-700 p-1"
+                    title="Cancel"
+                  >
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div 
+                className="flex justify-between items-center group cursor-pointer p-2 hover:bg-gray-50 rounded-lg"
+                onClick={() => handleEditClick('remoteStatus')}
+              >
+                <p className="font-medium capitalize">{editedData.remoteStatus || 'On-site'}</p>
+                <button className="text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" 
+                    />
+                  </svg>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Experience Required */}
+        <div className="col-span-2">
+          <label className="text-sm font-medium text-gray-600 mb-1 block">Experience Required</label>
+          <div className="relative">
+            {editingField === 'experienceRequired' ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm text-gray-600">Minimum (years)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500"
+                      value={editedData.experienceRequired?.min || 0}
+                      onChange={(e) => handleInputChange('experienceRequired.min', parseInt(e.target.value) || 0)}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm text-gray-600">Maximum (years)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500"
+                      value={editedData.experienceRequired?.max || 0}
+                      onChange={(e) => handleInputChange('experienceRequired.max', parseInt(e.target.value) || 0)}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm text-gray-600">Description</label>
+                  <textarea
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500"
+                    value={editedData.experienceRequired?.description || ''}
+                    onChange={(e) => handleInputChange('experienceRequired.description', e.target.value)}
+                    rows={3}
+                    placeholder="Describe the experience requirements in detail..."
+                  />
+                </div>
+                <div className="flex justify-end gap-2">
+                  <button onClick={() => handleCancel('experienceRequired')} className="text-red-600 hover:text-red-700 text-sm">Cancel</button>
+                  <button onClick={() => handleSave('experienceRequired')} className="text-green-600 hover:text-green-700 text-sm font-medium">Save</button>
+                </div>
+              </div>
+            ) : (
+              <div 
+                className="flex justify-between items-center group cursor-pointer p-2 hover:bg-gray-50 rounded-lg"
+                onClick={() => handleEditClick('experienceRequired')}
+              >
+                <div>
+                  <p className="font-medium">
+                    {editedData.experienceRequired?.min === 0 && editedData.experienceRequired?.max === 0 ? (
+                      'No experience required'
+                    ) : (
+                      `${editedData.experienceRequired.min}-${editedData.experienceRequired.max} years`
+                    )}
+                  </p>
+                  {editedData.experienceRequired?.description && (
+                    <p className="text-sm text-gray-600 mt-1">{editedData.experienceRequired.description}</p>
+                  )}
+                </div>
+                <button className="text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" 
+                    />
+                  </svg>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderJobDetails = () => (
+    <div className="bg-white rounded-lg border p-4">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-xl font-semibold text-gray-800">Job Details</h3>
+        {editingField === 'summary' ? (
+          <div className="space-x-2">
+            <button onClick={() => handleCancel('summary')} className="text-red-600 hover:text-red-700 text-sm">Cancel</button>
+            <button onClick={() => handleSave('summary')} className="text-green-600 hover:text-green-700 text-sm font-medium">Save</button>
+          </div>
+        ) : (
+          <button onClick={() => handleEditClick('summary')} className="text-blue-600 hover:text-blue-700 text-sm">Edit</button>
+        )}
+      </div>
+      {editingField === 'summary' ? (
+        <textarea
+          className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500"
+          value={editedData.summary || ''}
+          onChange={(e) => handleInputChange('summary', e.target.value)}
+          rows={6}
+          autoFocus
+        />
+      ) : (
+        <p className="text-gray-700 whitespace-pre-line cursor-pointer hover:bg-gray-50 p-2 rounded"
+           onClick={() => handleEditClick('summary')}>
+          {editedData.summary || 'No description provided'}
+        </p>
+      )}
+    </div>
+  );
+
+  const renderRequirements = () => (
+    <div className="bg-white rounded-lg border p-4">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-xl font-semibold text-gray-800">Requirements</h3>
+        {editingField === 'requirements' ? (
+          <div className="space-x-2">
+            <button onClick={() => handleCancel('requirements')} className="text-red-600 hover:text-red-700 text-sm">Cancel</button>
+            <button onClick={() => handleSave('requirements')} className="text-green-600 hover:text-green-700 text-sm font-medium">Save</button>
+          </div>
+        ) : (
+          <button onClick={() => handleEditClick('requirements')} className="text-blue-600 hover:text-blue-700 text-sm">Edit</button>
+        )}
+      </div>
+      {editingField === 'requirements' ? (
+        <div className="space-y-2">
+          {editedData.requirements?.map((req, index) => (
+            <div key={index} className="flex items-center gap-2">
+              <input
+                type="text"
+                className="flex-1 px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500"
+                value={req}
+                onChange={(e) => handleArrayItemChange('requirements', index, e.target.value)}
+              />
+              <button
+                onClick={() => handleRemoveArrayItem('requirements', index)}
+                className="text-red-500 hover:text-red-600"
+              >
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          ))}
+          <button
+            onClick={() => handleAddArrayItem('requirements')}
+            className="text-blue-600 hover:text-blue-700 text-sm"
+          >
+            + Add Requirement
+          </button>
+        </div>
+      ) : (
+        <ul className="list-disc list-inside space-y-1">
+          {editedData.requirements?.map((req, index) => (
+            <li key={index} className="text-gray-700">{req}</li>
+          )) || <li className="text-gray-500">No requirements specified</li>}
+        </ul>
+      )}
+    </div>
+  );
+
+  const renderSkillsAndBenefits = () => (
+    <div className="bg-white rounded-lg border p-4">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-xl font-semibold text-gray-800">Required Skills</h3>
+        {editingField === 'keywords' ? (
+          <div className="space-x-2">
+            <button onClick={() => handleCancel('keywords')} className="text-red-600 hover:text-red-700 text-sm">Cancel</button>
+            <button onClick={() => handleSave('keywords')} className="text-green-600 hover:text-green-700 text-sm font-medium">Save</button>
+          </div>
+        ) : (
+          <button onClick={() => handleEditClick('keywords')} className="text-blue-600 hover:text-blue-700 text-sm">Edit</button>
+        )}
+      </div>
+      {editingField === 'keywords' ? (
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-2">
+            {editedData.keywords?.map((skill, index) => (
+              <div key={index} className="flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                <span>{skill}</span>
+                <button
+                  onClick={() => handleRemoveArrayItem('keywords', index)}
+                  className="ml-2 text-blue-600 hover:text-blue-800"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center gap-2 mt-2">
+            <input
+              type="text"
+              placeholder="Add a new skill"
+              className="flex-1 px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500"
+              onKeyPress={(e) => {
+                if (e.key === 'Enter' && e.target.value.trim()) {
+                  handleArrayItemChange('keywords', editedData.keywords?.length || 0, e.target.value.trim());
+                  e.target.value = '';
+                }
+              }}
+            />
+            <button
+              onClick={() => {
+                const input = document.querySelector('input[placeholder="Add a new skill"]');
+                if (input.value.trim()) {
+                  handleArrayItemChange('keywords', editedData.keywords?.length || 0, input.value.trim());
+                  input.value = '';
+                }
+              }}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Add
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          {editedData.keywords?.map((skill, index) => (
+            <span key={index} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+              {skill}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  const renderAdditionalInformation = () => (
+    <div className="bg-white rounded-lg border p-4">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-xl font-semibold text-gray-800">Additional Information</h3>
+        {editingField === 'additional' ? (
+          <div className="space-x-2">
+            <button onClick={() => handleCancel('additional')} className="text-red-600 hover:text-red-700 text-sm">Cancel</button>
+            <button onClick={() => handleSave('additional')} className="text-green-600 hover:text-green-700 text-sm font-medium">Save</button>
+          </div>
+        ) : (
+          <button onClick={() => handleEditClick('additional')} className="text-blue-600 hover:text-blue-700 text-sm">Edit</button>
+        )}
+      </div>
+      {editingField === 'additional' ? (
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm text-gray-600">Application Deadline</label>
+            <input
+              type="text"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500"
+              value={editedData.applicationDeadline || ''}
+              onChange={(e) => handleInputChange('applicationDeadline', e.target.value)}
+              placeholder="DD/MM/YYYY"
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm text-gray-600">Contact Person</label>
+              <input
+                type="text"
+                className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500"
+                value={editedData.contactInfo?.name || ''}
+                onChange={(e) => handleInputChange('contactInfo.name', e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="text-sm text-gray-600">Email</label>
+              <input
+                type="email"
+                className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500"
+                value={editedData.contactInfo?.email || ''}
+                onChange={(e) => handleInputChange('contactInfo.email', e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="text-sm text-gray-600">Phone</label>
+              <input
+                type="tel"
+                className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500"
+                value={editedData.contactInfo?.phone || ''}
+                onChange={(e) => handleInputChange('contactInfo.phone', e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {editedData.applicationDeadline && (
+            <div>
+              <label className="text-sm text-gray-600 block">Application Deadline</label>
+              <p className="font-medium">{editedData.applicationDeadline}</p>
+            </div>
+          )}
+          {editedData.contactInfo && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm text-gray-600 block">Contact Person</label>
+                <p className="font-medium">{editedData.contactInfo.name}</p>
+              </div>
+              <div>
+                <label className="text-sm text-gray-600 block">Email</label>
+                <p className="font-medium">{editedData.contactInfo.email}</p>
+              </div>
+              <div>
+                <label className="text-sm text-gray-600 block">Phone</label>
+                <p className="font-medium">{editedData.contactInfo.phone}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
+  const renderPreview = () => {
+    if (!editedData) return null;
+
+    return (
+      <>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-semibold text-gray-800">Review Job Description</h2>
+          <button
+            onClick={() => setShowPreview(false)}
+            className="text-gray-500 hover:text-red-700"
+          >
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="space-y-6">
+          {renderBasicInformation()}
+          {renderJobDetails()}
+          {renderSkillsAndBenefits()}
+          {renderRequirements()}
+          {renderAdditionalInformation()}
+        </div>
+
+        {saveError && (
+          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-600">{saveError}</p>
+          </div>
+        )}
+
         <div className="mt-6 flex justify-end space-x-4">
           <button
             onClick={() => setShowPreview(false)}
             className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+            disabled={isSaving}
           >
             Back to Scanning
           </button>
           <button
             onClick={handleConfirm}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className={`px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center ${
+              isSaving ? 'opacity-75 cursor-not-allowed' : ''
+            }`}
+            disabled={isSaving}
           >
-            Confirm and Continue
+            {isSaving ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Saving...
+              </>
+            ) : (
+              'Confirm and Continue'
+            )}
           </button>
         </div>
       </>

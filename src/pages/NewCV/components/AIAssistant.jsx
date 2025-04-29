@@ -238,10 +238,7 @@ const AIAssistant = ({ currentStep, currentAdditionalSection, formData, preventA
   // Ngăn chặn sự kiện focus làm tràn ra ngoài
   return (
     <div className="flex flex-col h-full overflow-hidden max-w-full">
-      <p className="text-sm text-blue-600 mb-3 truncate">
-        Currently helping with: {getCurrentStepName()}
-      </p>
-      
+          
       <div className="relative flex-grow w-full">
         <div 
           ref={messagesContainerRef}

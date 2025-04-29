@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Save } from 'lucide-react';
 import { HiArrowTopRightOnSquare } from "react-icons/hi2";
+import { TbMessageChatbot } from "react-icons/tb";
 import {
   PersonalInfoStep,
   EducationStep,
@@ -28,6 +29,28 @@ import api, { handleApiError, callApi } from '../../utils/api';
 import CVSaveConfirmation from '../../components/CVSaveConfirmation';
 import { getDefaultTemplate, getTemplateById } from '../../templates';
 
+// Add these styles at the beginning of the file, after the imports
+const styles = `
+  @keyframes ripple {
+    0% {
+      transform: scale(0);
+      opacity: 0.5;
+    }
+    100% {
+      transform: scale(4);
+      opacity: 0;
+    }
+  }
+
+  .animate-ripple-1 {
+    animation: ripple 2s linear infinite;
+  }
+
+  .animate-ripple-2 {
+    animation: ripple 2s linear infinite;
+    animation-delay: 0.5s;
+  }
+`;
 
 const NewCV = () => {
   const [error, setError] = useState(null);
@@ -154,7 +177,12 @@ const NewCV = () => {
     }
   });
 
+  // Thêm state mới cho TabInterface
+  const [showHints, setShowHints] = useState(false);
+  const [showAI, setShowAI] = useState(false);
 
+  // Thêm state mới cho Preview Toggle Button
+  const [showPreview, setShowPreview] = useState(false);
 
   // Định nghĩa các section phụ
   const additionalSections = [
@@ -775,7 +803,7 @@ const NewCV = () => {
               <button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className={`bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center transition-colors ${
+                className={`bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center transition-colors ${
                   isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
                 }`}
               >
@@ -891,26 +919,62 @@ const NewCV = () => {
           transition={{ duration: 0.1 }}
           className="container mx-auto px-4 sm:px-6 lg:px-8"
         >
-          <div className="flex flex-col md:flex-row md:space-x-6">
-            {/* Tab Interface (Hint Panel + AI Assistant) */}
-            <div className="md:w-1/4 mb-6 md:mb-0">
-              <TabInterface 
-                currentStep={step} 
-                currentAdditionalSection={currentAdditionalSection}
-                formData={formData}
-              />
+          <div 
+            className={`flex flex-col md:flex-row relative w-full ${
+              !showPreview ? 'overflow-x-hidden' : ''
+            }`}
+            style={{
+              overscrollBehaviorX: !showPreview ? 'none' : 'auto',
+              msOverflowStyle: !showPreview ? 'none' : 'auto',  // For IE and Edge
+              scrollbarWidth: !showPreview ? 'none' : 'auto',   // For Firefox
+            }}
+          >
+            <div className={`w-full flex justify-center ${!showPreview ? 'overflow-x-hidden' : ''}`}>
+              {/* Main Form - centered by default, slides left when preview shows */}
+              <motion.div
+                initial={false}
+                animate={{
+                  width: '50vw',
+                  x: showPreview ? '-25vw' : '0',
+                }}
+                transition={{
+                  type: "spring",
+                  stiffness: 300,
+                  damping: 30,
+                  mass: 0.8
+                }}
+                className="relative"
+                style={{
+                  maxWidth: showPreview ? '50%' : '50%',
+                }}
+              >
+                <div className="bg-white rounded-lg shadow-md p-6 mb-6 scrollable">
+                  {renderStep()}
+                </div>
+                <div className="pb-20"></div>
+              </motion.div>
             </div>
             
-            {/* Main Form */}
-            <div className="md:w-3/8 flex-1">
-              <div className="bg-white rounded-lg shadow-md p-6 mb-6 scrollable">
-                {renderStep()}
-              </div>
-              <div className="pb-20"></div>
-            </div>
-            
-            {/* Preview Section */}
-            <div className="md:w-3/8 flex-1">
+            {/* Preview Section - slides in from right */}
+            <motion.div
+              initial={{ width: '0%', x: '50vw' }}
+              animate={{
+                width: showPreview ? '50%' : '0%',
+                x: showPreview ? '0' : '50vw',
+                opacity: showPreview ? 1 : 0
+              }}
+              transition={{
+                type: "spring",
+                stiffness: 300,
+                damping: 30,
+                mass: 0.8
+              }}
+              className={`absolute top-0 right-0 h-full ${showPreview ? '' : 'hidden md:block'}`}
+              style={{
+                width: showPreview ? '50%' : '0%',
+                pointerEvents: showPreview ? 'auto' : 'none'
+              }}
+            >
               <div className="bg-white rounded-lg shadow-md p-6 mb-6 sticky top-6">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-semibold">CV Preview</h2>
@@ -928,7 +992,149 @@ const NewCV = () => {
                   </div>
                 </div>
               </div>
+            </motion.div>
+
+            {/* Vertical Sidebar for Hints and AI - Moved to bottom right */}
+            <div className="fixed right-4 bottom-4 flex flex-col gap-4 z-10">
+              {/* Preview Toggle Button */}
+              <motion.button
+                onClick={() => {
+                  setShowPreview(!showPreview);
+                  if (showPreview) {
+                    // If we're hiding preview, also close full page preview if it's open
+                    setShowFullPagePreview(false);
+                  }
+                }}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+                className={`p-3 rounded-full shadow-lg transition-all duration-300 ${
+                  showPreview ? 'bg-blue-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-100'
+                }`}
+                title={showPreview ? "Hide Preview" : "Show Preview"}
+              >
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  className="h-6 w-6" 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor"
+                >
+                  {showPreview ? (
+                    <path 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      strokeWidth={2} 
+                      d="M3 3l18 18M10.94 6.08A6.93 6.93 0 0112 6c3.18 0 6.17 2.29 7.91 6a15.23 15.23 0 01-.9 1.64m-5.7-5.7a3 3 0 11-4.24 4.24M3 3l18 18m-6.28-6.28a3 3 0 11-4.24-4.24"
+                    />
+                  ) : (
+                    <>
+                      <path 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round" 
+                        strokeWidth={2} 
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                      <path 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round" 
+                        strokeWidth={2} 
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                      />
+                    </>
+                  )}
+                </svg>
+              </motion.button>
+
+              {/* Hint Button */}
+              <motion.button
+                onClick={() => {
+                  setShowHints(!showHints);
+                  if (showAI) setShowAI(false);
+                }}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+                className={`p-3 rounded-full shadow-lg transition-all duration-300 ${
+                  showHints ? 'bg-blue-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-100'
+                }`}
+                title="Show Hints"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </motion.button>
+
+              {/* AI Assistant Button */}
+              <motion.button
+                onClick={() => {
+                  setShowAI(!showAI);
+                  if (showHints) setShowHints(false);
+                }}
+                whileHover={{ 
+                  scale: 1.1,
+                  rotate: [0, -10, 10, -10, 0],
+                  transition: {
+                    rotate: {
+                      repeat: Infinity,
+                      duration: 0.5
+                    }
+                  }
+                }}
+                whileTap={{ scale: 0.95 }}
+                className={`relative p-3 rounded-full shadow-lg transition-all duration-300 overflow-hidden ${
+                  showAI ? 'bg-blue-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-100'
+                }`}
+                title="AI Assistant"
+              >
+                <TbMessageChatbot className="h-6 w-6 relative z-10" />
+                {/* Ripple effect elements */}
+                <div className={`absolute inset-0 ${showAI ? 'bg-blue-500' : 'bg-gray-100'}`}>
+                  <div className="absolute inset-0 animate-ripple-1 bg-opacity-20 bg-white rounded-full transform scale-0"></div>
+                  <div className="absolute inset-0 animate-ripple-2 bg-opacity-20 bg-white rounded-full transform scale-0"></div>
+                </div>
+              </motion.button>
             </div>
+
+            {/* Collapsible Sidebar Content - Moved to bottom right */}
+            <motion.div
+              initial={{ width: 0, opacity: 0, y: 20 }}
+              animate={{ 
+                width: showHints || showAI ? '300px' : 0,
+                opacity: showHints || showAI ? 1 : 0,
+                y: showHints || showAI ? 0 : 20
+              }}
+              transition={{ 
+                type: "spring",
+                stiffness: 260,
+                damping: 20
+              }}
+              className={`fixed right-4 bottom-20 bg-white rounded-lg shadow-lg overflow-hidden z-10 ${
+                showHints || showAI ? '' : 'hidden'
+              }`}
+              style={{ maxHeight: 'calc(100vh - 200px)' }}
+            >
+              <div className="relative">
+                {/* Close button */}
+                <button
+                  onClick={() => {
+                    setShowHints(false);
+                    setShowAI(false);
+                  }}
+                  className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+                
+                {/* Tab content */}
+                <TabInterface 
+                  currentStep={step} 
+                  currentAdditionalSection={currentAdditionalSection}
+                  formData={formData}
+                  mode={showHints ? 'hints' : 'ai'}
+                />
+              </div>
+            </motion.div>
           </div>
         </motion.div>
       </div>
@@ -1009,6 +1215,9 @@ const NewCV = () => {
       
       {/* Toast Container */}
       <ToastContainer position="top-right" autoClose={3000} />
+
+      {/* Add this style tag to the component's JSX, right after the opening <div> of the main container */}
+      <style>{styles}</style>
     </div>
   );
 };

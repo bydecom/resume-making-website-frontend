@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import axiosInstance from '../../../../utils/axios';
+import MatchedResumeTemplate from '../../../../templates/MatchedResumeTemplate';
 
 const steps = [
   {
@@ -29,17 +31,52 @@ const steps = [
   }
 ];
 
-const GeneratingStep = ({ onComplete }) => {
+const GeneratingStep = ({ onComplete, cvId, jobDescriptionId }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [progress, setProgress] = useState(0);
+  const [matchedResume, setMatchedResume] = useState(null);
+  const [error, setError] = useState(null);
+  const [isReviewing, setIsReviewing] = useState(false);
 
   useEffect(() => {
+    const generateResume = async () => {
+      try {
+        // Make API call with cvId and jobDescriptionId
+        const response = await axiosInstance.post('/api/resumes/match', {
+          cvId,
+          jobDescriptionId
+        });
+
+        if (response.data.success) {
+          // Ensure roleApply is included in the matched resume data
+          const matchedData = {
+            ...response.data.data,
+            roleApply: response.data.data.roleApply || response.data.data.jobDescription?.position
+          };
+          setMatchedResume(matchedData);
+          setIsReviewing(true);
+        } else {
+          setError(response.data.message || 'Failed to generate resume');
+        }
+      } catch (err) {
+        console.error('Error generating resume:', err);
+        // Handle different types of errors
+        if (err.response) {
+          setError(err.response.data.message || 'Server error occurred');
+        } else if (err.request) {
+          setError('No response from server. Please check your connection.');
+        } else {
+          setError(err.message || 'Failed to generate resume');
+        }
+      }
+    };
+
     // Simulate the generation process
     const interval = setInterval(() => {
       setProgress(prev => {
         if (prev >= 100) {
           clearInterval(interval);
-          onComplete?.();
+          generateResume(); // Make API call when progress reaches 100%
           return 100;
         }
         return prev + 1;
@@ -47,13 +84,72 @@ const GeneratingStep = ({ onComplete }) => {
     }, 50);
 
     return () => clearInterval(interval);
-  }, [onComplete]);
+  }, [cvId, jobDescriptionId]);
 
   useEffect(() => {
     // Update current step based on progress
     const stepProgress = progress / 20; // 5 steps, so each step is 20%
     setCurrentStep(Math.min(Math.floor(stepProgress), steps.length - 1));
   }, [progress]);
+
+  const handleApprove = () => {
+    onComplete?.(matchedResume);
+  };
+
+  const handleRegenerateClick = async () => {
+    setIsReviewing(false);
+    setProgress(0);
+    setMatchedResume(null);
+    // Quá trình sẽ tự động bắt đầu lại nhờ vào useEffect
+  };
+
+  if (error) {
+    return (
+      <div className="max-w-2xl mx-auto p-6 bg-red-50 rounded-lg">
+        <h3 className="text-red-600 font-medium">Error Generating Resume</h3>
+        <p className="text-red-500">{error}</p>
+        <button 
+          onClick={handleRegenerateClick}
+          className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
+
+  if (isReviewing && matchedResume) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <h3 className="text-lg font-medium text-blue-800 mb-2">Review Your Tailored Resume</h3>
+          <p className="text-blue-600">
+            We've analyzed your CV and the job description to create a tailored resume. 
+            Please review the content and formatting below.
+          </p>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-lg">
+          <MatchedResumeTemplate formData={matchedResume} />
+        </div>
+
+        <div className="flex justify-end space-x-4 mt-6">
+          <button
+            onClick={handleRegenerateClick}
+            className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+          >
+            Regenerate
+          </button>
+          <button
+            onClick={handleApprove}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Approve and Continue
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto space-y-8">

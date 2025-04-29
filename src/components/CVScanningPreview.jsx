@@ -19,7 +19,7 @@ const mockCVData = {
   education: [
     {
       degree: "Bachelor of Computer Science",
-      school: "University of Technology",
+      institution: "University of Technology",
       startDate: "2015-09",
       endDate: "2019-06",
       description: "Graduated with honors. Specialization in Software Engineering.",
@@ -102,7 +102,7 @@ const CVScanningPreview = ({ isOpen, onComplete = () => {}, data = {}, documentT
       expanded: false,
       items: [
         { id: "degree", label: "Degree", value: null, status: "pending" },
-        { id: "school", label: "School", value: null, status: "pending" },
+        { id: "institution", label: "institution", value: null, status: "pending" },
         { id: "eduDates", label: "Dates", value: null, status: "pending" },
       ],
     },
@@ -112,7 +112,7 @@ const CVScanningPreview = ({ isOpen, onComplete = () => {}, data = {}, documentT
       status: "pending",
       expanded: false,
       items: [
-        { id: "title", label: "Job Title", value: null, status: "pending" },
+        { id: "position", label: "Job Position", value: null, status: "pending" },
         { id: "company", label: "Company", value: null, status: "pending" },
         { id: "expDates", label: "Dates", value: null, status: "pending" },
         { id: "description", label: "Description", value: null, status: "pending" },
@@ -315,7 +315,7 @@ const CVScanningPreview = ({ isOpen, onComplete = () => {}, data = {}, documentT
   const processEducation = async (data) => {
     if (!data.education || data.education.length === 0) {
       updateItemStatus("education", "degree", "completed");
-      updateItemStatus("education", "school", "completed");
+      updateItemStatus("education", "institution", "completed");
       updateItemStatus("education", "eduDates", "completed");
       return;
     }
@@ -328,11 +328,11 @@ const CVScanningPreview = ({ isOpen, onComplete = () => {}, data = {}, documentT
     const degree = firstEducation.degree || '';
     updateItemValue("education", "degree", degree);
     
-    // School
-    updateItemStatus("education", "school", "scanning");
+    // institution
+    updateItemStatus("education", "institution", "scanning");
     await simulateProcessingDelay(400);
-    const school = firstEducation.school || '';
-    updateItemValue("education", "school", school);
+    const institution = firstEducation.institution || '';
+    updateItemValue("education", "institution", institution);
     
     // Dates
     updateItemStatus("education", "eduDates", "scanning");
@@ -353,7 +353,7 @@ const CVScanningPreview = ({ isOpen, onComplete = () => {}, data = {}, documentT
   // Xử lý phần Experience
   const processExperience = async (data) => {
     if (!data.experience || data.experience.length === 0) {
-      updateItemStatus("experience", "title", "completed");
+      updateItemStatus("experience", "position", "completed");
       updateItemStatus("experience", "company", "completed");
       updateItemStatus("experience", "expDates", "completed");
       updateItemStatus("experience", "description", "completed");
@@ -362,11 +362,11 @@ const CVScanningPreview = ({ isOpen, onComplete = () => {}, data = {}, documentT
     
     const firstExperience = data.experience[0];
     
-    // Job Title
-    updateItemStatus("experience", "title", "scanning");
+    // Job Position
+    updateItemStatus("experience", "position", "scanning");
     await simulateProcessingDelay(300);
-    const title = firstExperience.title || '';
-    updateItemValue("experience", "title", title);
+    const position = firstExperience.position || '';
+    updateItemValue("experience", "position", position);
     
     // Company
     updateItemStatus("experience", "company", "scanning");
@@ -779,7 +779,7 @@ const CVScanningPreview = ({ isOpen, onComplete = () => {}, data = {}, documentT
                         {extractedData.experience.map((job, index) => (
                           <div key={index} className="mb-3">
                             <div className="flex justify-between">
-                              <h4 className="font-medium">{job.title}</h4>
+                              <h4 className="font-medium">{job.position}</h4>
                               <div className="text-sm text-gray-500">
                                 {job.startDate && formatDate(job.startDate)} - {job.isPresent ? 'Present' : job.endDate && formatDate(job.endDate)}
                               </div>
@@ -803,7 +803,7 @@ const CVScanningPreview = ({ isOpen, onComplete = () => {}, data = {}, documentT
                                 {edu.startDate && formatDate(edu.startDate)} - {edu.isPresent ? 'Present' : edu.endDate && formatDate(edu.endDate)}
                               </div>
                             </div>
-                            <div className="text-gray-600">{edu.school}</div>
+                            <div className="text-gray-600">{edu.institution}</div>
                             {edu.description && <p className="text-sm mt-1 text-gray-600">{edu.description}</p>}
                           </div>
                         ))}

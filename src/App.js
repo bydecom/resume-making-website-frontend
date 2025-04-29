@@ -13,6 +13,7 @@ import EnhanceMail from './pages/EnhanceMail';
 import About from './pages/About';
 import Auth from './pages/Auth';
 import Profile from './pages/Profile';
+import Templates from './pages/Templates';
 
 import AdminRegister from './pages/AdminRegister';
 import NotFound from './pages/NotFound';
@@ -88,14 +89,14 @@ const Layout = ({ children }) => {
     '/admin-register', 
     '/unauthorized',
     '/new-cv',
-    '/edit-cv',
     '/new-resume'
   ];
   
-  // Check if the current path is an admin route
+  // Check if the current path is an admin route or edit-cv route
   const isAdminRoute = location.pathname.startsWith('/admin');
+  const isEditCVRoute = location.pathname.startsWith('/edit-cv');
   
-  const shouldShowHeaderFooter = !noHeaderFooterRoutes.includes(location.pathname) && !isAdminRoute;
+  const shouldShowHeaderFooter = !noHeaderFooterRoutes.includes(location.pathname) && !isAdminRoute && !isEditCVRoute;
   
   if (!shouldShowHeaderFooter) {
     // Return children directly without header/footer for login, register, admin pages, etc.
@@ -124,6 +125,7 @@ const AppRoutes = () => {
         <Route path="/register" element={<Auth />} />
         <Route path="/admin-register" element={<AdminRegister />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
+        <Route path="/templates" element={<Templates />} />
         
         {/* Home page is now public */}
         <Route path="/" element={<Home />} />

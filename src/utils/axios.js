@@ -1,37 +1,47 @@
 import axios from 'axios';
 
-// Create an axios instance with a base URL that matches your backend
-// If your original code was working, let's keep the same configuration
-const api = axios.create({
-  // Use the exact same base URL that was working before
-  baseURL: 'http://localhost:5000'
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+const axiosInstance = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
-// Add auth token to every request
-api.interceptors.request.use(config => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+// Add a request interceptor
+axiosInstance.interceptors.request.use(
+  (config) => {
+    // Get token from localStorage
+    const token = localStorage.getItem('token');
+    
+    // If token exists, add it to request headers
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
   }
-  return config;
-});
+);
 
-// Handle token expiration
-api.interceptors.response.use(
-  response => response,
-  error => {
-    if (error.response?.status === 401) {
-      // Token expired or invalid
+// Add a response interceptor
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    // Handle 401 Unauthorized errors
+    if (error.response && error.response.status === 401) {
+      // Clear token and redirect to login
       localStorage.removeItem('token');
       localStorage.removeItem('userId');
       localStorage.removeItem('userName');
       localStorage.removeItem('userRole');
-      
-      // Redirect to login page
       window.location.href = '/login';
     }
     return Promise.reject(error);
   }
 );
 
-export default api; 
+export default axiosInstance; 

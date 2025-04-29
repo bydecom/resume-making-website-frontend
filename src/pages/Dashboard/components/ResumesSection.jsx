@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { Plus, MoreVertical, FileText, Download, Edit, Trash2, Eye, XCircle, Copy } from "lucide-react";
+import { Plus, FileText, XCircle } from "lucide-react";
 import ResumeCard from "./ResumeCard";
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axiosInstance from '../../../utils/axios';
+import MatchedResumeTemplate from '../../../templates/MatchedResumeTemplate';
 
 const ResumesSection = () => {
   const navigate = useNavigate();
@@ -19,12 +20,8 @@ const ResumesSection = () => {
   const fetchResumes = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get('http://localhost:5000/api/resumes', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      setError(null);
+      const response = await axiosInstance.get('/api/resumes');
       
       if (response.data.success) {
         setResumes(response.data.data || []);
@@ -57,23 +54,22 @@ const ResumesSection = () => {
   };
 
   const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this resume?')) {
+      return;
+    }
+
     try {
-      const response = await axios.delete(`http://localhost:5000/api/resumes/${id}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await axiosInstance.delete(`/api/resumes/${id}`);
       
       if (response.data.success) {
         // Refresh the resumes list after successful deletion
         fetchResumes();
+        setActiveMenuId(null);
       } else {
         throw new Error(response.data.message || 'Failed to delete resume');
       }
     } catch (err) {
       console.error('Error deleting resume:', err);
-      // You might want to show an error toast here
       alert(err.response?.data?.message || 'Error deleting resume. Please try again.');
     }
   };
@@ -144,7 +140,7 @@ const ResumesSection = () => {
         <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
           <FileText className="h-16 w-16 mx-auto text-gray-400 mb-4" />
           <h3 className="text-xl font-semibold text-gray-800 mb-2">No Resumes Yet</h3>
-          <p className="text-gray-500 mb-6">You haven't shared your story with us. Let's create your first professional resume and get things rolling!</p>
+          <p className="text-gray-500 mb-6">Create your first professional resume tailored to your dream job!</p>
           <button
             onClick={handleCreateNew}
             className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md"
@@ -156,62 +152,25 @@ const ResumesSection = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {resumes.map((resume) => (
-            <div key={resume._id || resume.id} className="relative">
-              <ResumeCard 
-                resume={resume} 
-                openPreview={openPreview} 
-                toggleMenu={toggleMenu} 
-                activeMenuId={activeMenuId} 
-              />
-              
-              {activeMenuId === (resume._id || resume.id) && (
-                <div className="absolute top-7 right-7 z-10">
-                  <div className="w-48 bg-white rounded-md shadow-lg border border-gray-200">
-                    <div className="py-1">
-                      <button 
-                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                        onClick={() => openPreview(resume)}
-                      >
-                        <Eye className="h-4 w-4" />
-                        Preview
-                      </button>
-                      <button 
-                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                        onClick={() => handleEdit(resume._id || resume.id)}
-                      >
-                        <Edit className="h-4 w-4" />
-                        Edit
-                      </button>
-                      <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2">
-                        <Copy className="h-4 w-4" />
-                        Duplicate
-                      </button>
-                      <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2">
-                        <Download className="h-4 w-4" />
-                        Download
-                      </button>
-                      <div className="border-t border-gray-100 my-1"></div>
-                      <button 
-                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                        onClick={() => handleDelete(resume._id || resume.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+            <ResumeCard 
+              key={resume._id}
+              resume={resume}
+              openPreview={openPreview}
+              toggleMenu={toggleMenu}
+              activeMenuId={activeMenuId}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
           ))}
         </div>
       )}
 
+      {/* Preview Modal using MatchedResumeTemplate */}
       {previewResume && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-screen overflow-auto">
-            <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-              <h3 className="font-semibold text-lg">Resume Preview: {previewResume.name}</h3>
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-auto">
+            <div className="p-4 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10">
+              <h3 className="font-semibold text-lg">Resume Preview</h3>
               <button 
                 className="p-1 rounded-full hover:bg-gray-100"
                 onClick={closePreview}
@@ -220,28 +179,8 @@ const ResumesSection = () => {
               </button>
             </div>
             <div className="p-8">
-              <div className="aspect-[1/1.4] bg-gray-100 rounded flex flex-col items-center justify-center">
-                <FileText className="h-24 w-24 text-blue-500 mb-4" />
-                <div className="text-center">
-                  <h4 className="font-bold text-lg">{previewResume.name}</h4>
-                  <p className="text-gray-600">{previewResume.personalInfo?.professionalHeadline || "No headline specified"}</p>
-                  
-                  {/* Resume Score */}
-                  <div className="mt-4 flex items-center justify-center">
-                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
-                      <span className="font-bold text-blue-600">
-                        {Math.round((previewResume.matchedSkills?.reduce((acc, skill) => acc + skill.relevance, 0) / 
-                          (previewResume.matchedSkills?.length || 1)) || 0)}
-                      </span>
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium text-left">Match Score</div>
-                      <div className="text-xs text-gray-500 text-left">
-                        Based on job requirements
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
+                <MatchedResumeTemplate formData={previewResume} />
               </div>
               <div className="mt-6 flex justify-end gap-3">
                 <button 
@@ -250,8 +189,11 @@ const ResumesSection = () => {
                 >
                   Close
                 </button>
-                <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                  Download PDF
+                <button 
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  onClick={() => handleEdit(previewResume._id)}
+                >
+                  Edit Resume
                 </button>
               </div>
             </div>

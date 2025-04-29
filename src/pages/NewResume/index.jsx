@@ -171,6 +171,11 @@ const NewResume = () => {
   };
 
   const handleJobDescriptionSubmit = (data) => {
+    // Ensure we have the _id from the saved job description
+    if (!data._id) {
+      console.error('No job description ID received');
+      return;
+    }
     setJobDescription(data);
     handleNext();
   };
@@ -202,9 +207,8 @@ const NewResume = () => {
         return (
           <GeneratingStep 
             onComplete={handleGenerationComplete}
-            selectedCV={selectedCV}
-            selectedMethod={selectedMethod}
-            jobDescription={jobDescription}
+            cvId={selectedCV?._id}
+            jobDescriptionId={jobDescription?._id}
           />
         );
       default:

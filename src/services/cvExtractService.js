@@ -67,7 +67,7 @@ class CVExtractService {
         experience: Array.isArray(extractedData.experience) 
           ? extractedData.experience.map(exp => ({
               ...exp,
-              title: exp.title || '',
+              position: exp.position || '',
               company: exp.company || '',
               location: exp.location || '',
               startDate: exp.startDate || '',

@@ -2,19 +2,23 @@ import React, { useState } from "react";
 import { Plus, MoreVertical, FileText, Download, Edit, Trash2, Eye, XCircle, Copy } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import CreateCVModal from '../../../components/CreateCVModal';
-import CVPreview from '../../NewCV/components/CVPreview';
+import CVPreviewModal from '../../../components/CVPreviewModal';
+import ReusableCVHeader from '../../../components/ReusableCVHeader';
 import { getDefaultTemplate } from '../../../templates';
+import axiosInstance from '../../../utils/axios';
 
-const CVSection = ({ cvData, isLoading, onEditCV, onDeleteCV }) => {
+const CVSection = ({ cvData, isLoading, onEditCV, onDeleteCV, setCvData }) => {
   const navigate = useNavigate();
 
   // Use cvData.cvs if available, otherwise use sample data
   const cvList = cvData.cvs || [];
 
   const [activeMenuId, setActiveMenuId] = useState(null);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [previewCV, setPreviewCV] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createModalKey, setCreateModalKey] = useState(0);
+  const [selectedCVId, setSelectedCVId] = useState(null);
 
   const toggleMenu = (id) => {
     setActiveMenuId(activeMenuId === id ? null : id);
@@ -35,10 +39,39 @@ const CVSection = ({ cvData, isLoading, onEditCV, onDeleteCV }) => {
     };
     
     setPreviewCV(previewData);
+    setShowPreviewModal(true);
     setActiveMenuId(null);
+    setSelectedCVId(cv._id || cv.id);
+  };
+
+  const handleApplyTemplate = async (templateId) => {
+    if (!selectedCVId) return;
+    try {
+      // Gọi API cập nhật template cho CV
+      await axiosInstance.put(`/api/cv/${selectedCVId}`, {
+        template: { id: templateId }
+      });
+      // Cập nhật lại state local của danh sách CV
+      if (typeof setCvData === 'function') {
+        setCvData(prev => ({
+          ...prev,
+          cvs: prev.cvs.map(cv =>
+            (cv._id || cv.id) === selectedCVId
+              ? { ...cv, template: { id: templateId } }
+              : cv
+          )
+        }));
+      }
+      // Cập nhật previewCV để modal hiển thị đúng template mới
+      setPreviewCV(prev => ({ ...prev, template: { id: templateId } }));
+      setShowPreviewModal(false);
+    } catch (error) {
+      console.error('Update template failed', error);
+    }
   };
 
   const closePreview = () => {
+    setShowPreviewModal(false);
     setPreviewCV(null);
   };
 
@@ -82,7 +115,7 @@ const CVSection = ({ cvData, isLoading, onEditCV, onDeleteCV }) => {
         },
         summary: cvToEdit.summary || '',
         experience: (cvToEdit.experience || []).map(exp => ({
-          title: exp.title || '',
+          position: exp.position || '',
           company: exp.company || '',
           location: exp.location || '',
           startDate: exp.startDate || '',
@@ -92,7 +125,7 @@ const CVSection = ({ cvData, isLoading, onEditCV, onDeleteCV }) => {
         })),
         education: (cvToEdit.education || []).map(edu => ({
           degree: edu.degree || '',
-          school: edu.school || '',
+          institution: edu.institution || '',
           location: edu.location || '',
           startDate: edu.startDate || '',
           endDate: edu.endDate || '',
@@ -313,7 +346,11 @@ const CVSection = ({ cvData, isLoading, onEditCV, onDeleteCV }) => {
               </div>
               
               <div className="h-48 bg-gray-50 flex items-center justify-center group-hover:bg-gray-100 transition-colors relative">
-                <FileText className="h-20 w-20 text-blue-500 transition-colors" />
+                <div className="w-full h-full flex items-center justify-center">
+                  <div className="w-full max-w-xs">
+                    <ReusableCVHeader data={cv} templateName={cv.template?.id || ''} />
+                  </div>
+                </div>
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-100 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 
                 {/* Overlay with Preview button on hover */}
@@ -362,30 +399,16 @@ const CVSection = ({ cvData, isLoading, onEditCV, onDeleteCV }) => {
         </div>
       )}
     
-      {previewCV && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-screen overflow-auto">
-            <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-              <h3 className="font-semibold text-lg">CV Preview</h3>
-              <button 
-                className="p-1 rounded-full hover:bg-gray-100"
-                onClick={closePreview}
-              >
-                <XCircle className="h-6 w-6 text-gray-500" />
-              </button>
-            </div>
-            <div className="p-8">
-              <div className="bg-white border border-gray-200 rounded shadow-sm overflow-hidden">
-                <div className="w-full max-h-[70vh] overflow-y-auto">
-                  <CVPreview formData={previewCV} />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Preview Modal */}
+      {showPreviewModal && previewCV && (
+        <CVPreviewModal
+          isOpen={showPreviewModal}
+          onClose={handleApplyTemplate}
+          formData={previewCV}
+        />
       )}
 
-      {/* Modal */}
+      {/* Create CV Modal */}
       <CreateCVModal 
         key={createModalKey}
         isOpen={showCreateModal} 

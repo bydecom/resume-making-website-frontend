@@ -147,7 +147,7 @@ class CVParser {
         : [],
       experience: Array.isArray(data.experience)
         ? data.experience.map(exp => ({
-            title: exp.title || '',
+            position: exp.position || '',
             company: exp.company || '',
             startDate: exp.startDate || '',
             endDate: exp.endDate || '',

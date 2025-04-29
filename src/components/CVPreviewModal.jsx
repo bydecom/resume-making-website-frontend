@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import CVPreview from '../pages/NewCV/components/CVPreview';
 import { FaExchangeAlt, FaLightbulb } from 'react-icons/fa';
 import '../pages/NewCV/lib/input-styles.css';
@@ -9,9 +10,19 @@ const CVPreviewModal = ({
   onClose, 
   formData
 }) => {
+  const navigate = useNavigate();
   const initialTemplateId = formData.template?.id || Object.keys(templates)[0];
   const [selectedTemplateId, setSelectedTemplateId] = useState(initialTemplateId);
+  const [showAllTemplates, setShowAllTemplates] = useState(false);
   
+  // Template tips
+  const templateTips = [
+    "Professional template is perfect for traditional industries like banking, law, and consulting",
+    "Modern template works great for tech, creative, and startup roles",
+    "Simple template helps your content stand out and is ATS-friendly",
+    "Each template is designed to highlight different aspects of your experience"
+  ];
+
   // Danh sách các lời khuyên
   const tips = [
     "Keep your CV concise and relevant to the job you're applying for.",
@@ -34,111 +45,149 @@ const CVPreviewModal = ({
 
   // Áp dụng template được chọn vào formData chính
   const applyTemplate = () => {
-    // Truyền template được chọn trở lại phần call back
     onClose(selectedTemplateId);
   };
 
-  // Đóng modal mà không áp dụng template
-  const handleClose = () => {
-    onClose();
-  };
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full h-full max-w-[95vw] max-h-[95vh] overflow-hidden flex flex-col">
-        <div className="p-4 border-b flex justify-between items-center">
-          <h2 className="text-xl font-semibold">CV Preview</h2>
+    <div className="fixed inset-0 bg-white z-50 flex flex-col">
+      {/* Header */}
+      <div className="px-6 py-4 border-b bg-white flex-shrink-0 flex items-center justify-between">
+        <h2 className="text-xl font-semibold">Choose Template</h2>
+        <div className="flex items-center gap-4">
           <button 
-            onClick={handleClose}
-            className="text-gray-500 hover:text-gray-700"
+            onClick={() => onClose()}
+            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-        
-        <div className="flex-grow overflow-auto flex">
-          {/* Left sidebar - Template Selection - 1/4 width */}
-          <div className="w-1/4 border-r p-4 overflow-y-auto scrollable">
-            <div className="flex items-center mb-4">
-              <FaExchangeAlt className="text-blue-600 mr-2" />
-              <h3 className="text-lg font-medium">Choose Template</h3>
-            </div>
-            
-            <div className="space-y-3">
-              {Object.values(templates).map(template => (
-                <div 
-                  key={template.id}
-                  className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                    selectedTemplateId === template.id 
-                      ? 'border-blue-500 bg-blue-50' 
-                      : 'border-gray-200 hover:border-blue-300'
-                  }`}
-                  onClick={() => setSelectedTemplateId(template.id)}
-                >
-                  <div className="font-medium">{template.name}</div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    {template.description}
-                  </div>
-                </div>
-              ))}
-            </div>
-            
-            <div className="mt-6">
-              <button 
-                className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
-                onClick={applyTemplate}
-              >
-                Apply Template
-              </button>
-            </div>
-          </div>
-          
-          {/* Middle section - CV Preview - 2/4 width */}
-          <div className="w-2/4 p-4 overflow-y-auto scrollable flex justify-center bg-gray-50">
-            <div className="max-w-[600px] w-full bg-white shadow-md rounded-lg overflow-hidden cv-wrapper">
-              <CVPreview formData={previewData} />
-            </div>
-          </div>
-          
-          {/* Right sidebar - CV Tips - 1/4 width */}
-          <div className="w-1/4 border-l p-4 overflow-y-auto scrollable">
-            <div className="flex items-center mb-4">
-              <FaLightbulb className="text-yellow-500 mr-2" />
-              <h3 className="text-lg font-medium">CV Tips</h3>
-            </div>
-            
-            <div className="space-y-4">
-              {tips.map((tip, index) => (
-                <div key={index} className="p-3 bg-yellow-50 rounded-lg border border-yellow-100">
-                  <p className="text-sm text-gray-700">{tip}</p>
-                </div>
-              ))}
-            </div>
-            
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
-              <h4 className="font-medium text-blue-700 mb-2">Need more help?</h4>
-              <p className="text-sm text-gray-700">
-                Our AI assistant can provide personalized advice for your CV. Click the AI Assistant tab in the main editor.
-              </p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="border-t p-4 flex justify-between">
-          <button 
-            onClick={handleClose}
-            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-          >
-            Close
+            Cancel
           </button>
           <button 
             onClick={applyTemplate}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2"
           >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+            </svg>
             Apply Template
           </button>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 overflow-hidden">
+        <div className="h-full flex">
+          {/* Left Column - Template Selection */}
+          <div className="w-1/4 border-r bg-gray-50 flex flex-col">
+            {/* Fixed Header */}
+            <div className="flex-shrink-0 p-6 pb-3 bg-gray-50 border-b">
+              <div className="flex items-center text-blue-600">
+                <FaExchangeAlt className="mr-2" />
+                <h3 className="text-lg font-medium">Choose Template</h3>
+              </div>
+            </div>
+
+            {/* Scrollable Content Container */}
+            <div className="flex-1 overflow-hidden flex flex-col p-6 pt-3">
+              {/* Templates Section */}
+              <div className="flex-1 overflow-y-auto">
+                <div className="space-y-3 px-0.5">
+                  {Object.values(showAllTemplates ? templates : Object.fromEntries(
+                    Object.entries(templates).slice(0, 5)
+                  )).map(template => (
+                    <div 
+                      key={template.id}
+                      className={`p-3 border rounded-lg cursor-pointer transition-all duration-200 hover:z-10 ${
+                        selectedTemplateId === template.id 
+                          ? 'border-blue-500 bg-blue-50 shadow-sm' 
+                          : 'border-gray-200 hover:border-blue-300 hover:shadow-sm'
+                      }`}
+                      style={{
+                        transform: selectedTemplateId === template.id ? 'scale(1.01)' : 'scale(1)',
+                        transformOrigin: 'center'
+                      }}
+                      onClick={() => setSelectedTemplateId(template.id)}
+                    >
+                      <div className="font-medium text-sm text-gray-900">{template.name}</div>
+                      <div className="text-xs text-gray-500 mt-0.5">
+                        {template.description}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Template Tips Section */}
+                <div className="flex-shrink-0 mt-6">
+                <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
+                  <h4 className="font-medium text-blue-700 mb-2">Need more templates?</h4>
+                  <p className="text-sm text-gray-700 mb-4">
+                    We've selected the 5 best CV templates for you. Want more options? Choose how you'd like to view them!
+                  </p>
+                  <div className="flex gap-3">
+                    <button 
+                      className="flex-1 bg-white text-blue-600 py-2 px-4 rounded-md border border-blue-600 hover:bg-blue-50 transition-colors text-sm"
+                      onClick={() => setShowAllTemplates(true)}
+                    >
+                      Show Here
+                    </button>
+                    <button 
+                      className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors text-sm"
+                      onClick={() => navigate('/templates')}
+                    >
+                      Go to Templates
+                    </button>
+                  </div>
+                </div>
+              </div>
+                {/* Remove the old Browse More Button */}
+              </div>
+            </div>
+          </div>
+          
+          {/* Middle Column - CV Preview */}
+          <div className="flex-1 bg-gray-100 p-6 overflow-y-auto">
+            <div className="max-w-[850px] mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
+              <div className="cv-wrapper">
+                <CVPreview formData={previewData} />
+              </div>
+            </div>
+          </div>
+          
+          {/* Right Column - CV Tips */}
+          <div className="w-1/4 border-l bg-gray-50 flex flex-col">
+            {/* Fixed Header */}
+            <div className="flex-shrink-0 p-6 pb-3 bg-gray-50 border-b">
+              <div className="flex items-center text-yellow-600">
+                <FaLightbulb className="mr-2" />
+                <h3 className="text-lg font-medium">CV Writing Tips</h3>
+              </div>
+            </div>
+            
+            {/* Scrollable Content Container */}
+            <div className="flex-1 overflow-hidden flex flex-col p-6 pt-3">
+              {/* Tips Section */}
+              <div className="flex-1 overflow-y-auto">
+                <div className="space-y-4">
+                  {tips.map((tip, index) => (
+                    <div 
+                      key={index} 
+                      className="p-4 bg-yellow-50 rounded-lg border border-yellow-100 hover:shadow-md transition-shadow"
+                    >
+                      <p className="text-sm text-gray-700">{tip}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Fixed Bottom Section */}
+              <div className="flex-shrink-0 mt-6">
+                <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
+                  <h4 className="font-medium text-blue-700 mb-2">Need more help?</h4>
+                  <p className="text-sm text-gray-700">
+                    Our AI assistant can provide personalized advice for your CV. Click the AI Assistant tab in the main editor.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
