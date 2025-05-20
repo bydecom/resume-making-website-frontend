@@ -16,7 +16,7 @@ const ChooseMethodStep = ({ onMethodSelect, selectedCV }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* AI-Powered Method */}
         <div
-          onClick={() => onMethodSelect('ai')}
+          onClick={() => onMethodSelect('useAI')}
           className="p-[1px] rounded-lg bg-gradient-to-r from-pink-300 via-purple-300 to-indigo-300 hover:from-pink-500 hover:via-purple-500 hover:to-indigo-500 transition-all duration-300 group cursor-pointer"
         >
           <div className="rounded-lg p-6 bg-gradient-to-br from-white via-purple-50 to-pink-50 transition-colors">
@@ -51,9 +51,6 @@ const ChooseMethodStep = ({ onMethodSelect, selectedCV }) => {
             </ul>
           </div>
         </div>
-
-
-
 
         {/* Manual Method */}
         <div

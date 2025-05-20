@@ -54,9 +54,6 @@ const styles = `
 
 const NewCV = () => {
   const [error, setError] = useState(null);
-  const [resumeId, setResumeId] = useState(null);
-  const [generating, setGenerating] = useState(false);
-  const [generatedContent, setGeneratedContent] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
   const [step, setStep] = useState(1);
@@ -70,35 +67,46 @@ const NewCV = () => {
   // State để theo dõi section phụ hiện tại đang được hiển thị
   const [currentAdditionalSection, setCurrentAdditionalSection] = useState(null);
   
-  const [formData, setFormData] = useState({
-    personalInfo: {
-      firstName: '',
-      lastName: '',
-      professionalHeadline: '',
-      email: '',
-      phone: '',
-      location: '',
-      country: '',
-      website: '',
-      linkedin: ''
-    },
-    template: { id: getDefaultTemplate().id },
-    summary: '',
-    education: [],
-    experience: [],
-    skills: [],
-    certifications: [],
-    projects: [],
-    languages: [],
-    activities: [],
-    additionalInfo: {
-      interests: '',
-      achievements: '',
-      publications: '',
-      references: '',
-      customSections: []
-    },
-    customFields: []
+  // Thêm state để xác định mode edit
+  const [isEditing, setIsEditing] = useState(location.state?.isEditing || false);
+  const [cvId, setCvId] = useState(location.state?.editData?._id);
+  const returnPath = location.state?.returnPath || '/dashboard';
+
+  // Khởi tạo formData với dữ liệu edit nếu có
+  const [formData, setFormData] = useState(() => {
+    if (location.state?.isEditing && location.state?.editData) {
+      return location.state.editData;
+    }
+    return {
+      personalInfo: {
+        firstName: '',
+        lastName: '',
+        professionalHeadline: '',
+        email: '',
+        phone: '',
+        location: '',
+        country: '',
+        website: '',
+        linkedin: ''
+      },
+      template: { id: getDefaultTemplate().id },
+      summary: '',
+      education: [],
+      experience: [],
+      skills: [],
+      certifications: [],
+      projects: [],
+      languages: [],
+      activities: [],
+      additionalInfo: {
+        interests: '',
+        achievements: '',
+        publications: '',
+        references: '',
+        customSections: []
+      },
+      customFields: []
+    };
   });
 
   // Thêm state mới cho popup
@@ -107,10 +115,6 @@ const NewCV = () => {
   // Thêm state cho name modal
   const [showNameModal, setShowNameModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Thêm vào phần state
-  const [isEditing, setIsEditing] = useState(false);
-  const [cvId, setCvId] = useState(null);
 
   // Thêm các state khác nếu cần
   const [sections, setSections] = useState([]); // Định nghĩa sections
@@ -129,60 +133,14 @@ const NewCV = () => {
   const extractedData = location.state?.extractedData;
   const fromUpload = location.state?.fromUpload;
   
-  // Khởi tạo state với dữ liệu từ extractedData nếu có
-  const [cvData, setCvData] = useState(() => {
-    if (fromUpload && extractedData) {
-      return {
-        personalInfo: extractedData.personalInfo || {
-          firstName: '',
-          lastName: '',
-          professionalHeadline: '',
-          email: '',
-          phone: '',
-          location: '',
-          country: '',
-          website: '',
-          linkedin: ''
-        },
-        summary: extractedData.summary || '',
-        experience: extractedData.experience || [],
-        education: extractedData.education || [],
-        skills: extractedData.skills || [],
-        projects: extractedData.projects || [],
-        certifications: extractedData.certifications || [],
-        languages: extractedData.languages || []
-      };
-    } else {
-      return {
-        // ... your default state here ...
-        personalInfo: {
-          firstName: '',
-          lastName: '',
-          professionalHeadline: '',
-          email: '',
-          phone: '',
-          location: '',
-          country: '',
-          website: '',
-          linkedin: ''
-        },
-        summary: '',
-        experience: [],
-        education: [],
-        skills: [],
-        projects: [],
-        certifications: [],
-        languages: []
-      };
-    }
-  });
-
   // Thêm state mới cho TabInterface
   const [showHints, setShowHints] = useState(false);
   const [showAI, setShowAI] = useState(false);
+  const [tips, setTips] = useState(location.state?.tips || null);
+  const [isNewResume, setIsNewResume] = useState(location.state?.isNewResume || false);
 
   // Thêm state mới cho Preview Toggle Button
-  const [showPreview, setShowPreview] = useState(false);
+  const [showPreview, setShowPreview] = useState(location.state?.isEditing || false);
 
   // Định nghĩa các section phụ
   const additionalSections = [
@@ -283,6 +241,14 @@ const NewCV = () => {
   
   // Thêm vào useEffect để kiểm tra xem có đang edit CV không
   useEffect(() => {
+    // Nếu đến từ trang analyzing và có tips
+    if (location.state?.fromAnalyzing && location.state?.tips) {
+      setTips(location.state.tips);
+      setShowHints(true);
+      setIsNewResume(true);
+      return; // Không cần fetch CV data
+    }
+
     // Kiểm tra nếu có cvId trong location state (từ trang dashboard)
     if (location.state?.cvId) {
       setCvId(location.state.cvId);
@@ -320,28 +286,20 @@ const NewCV = () => {
       })
       .catch(error => {
         console.error('Error fetching CV:', error);
-        alert('Could not load CV data. Please try again.');
+        toast.error('Could not load CV data. Please try again.');
       });
     }
   }, [location.state]);
 
-  // Hàm xử lý sau khi người dùng đặt tên CV
-  const handleSaveWithName = (cvName) => {
+  // Cập nhật handleSaveWithName để xử lý cả create và update
+  const handleSaveWithName = async (cvName) => {
     setShowNameModal(false);
-    
-    // Nếu không có tên, tạo tên mặc định
-    const finalName = cvName || `Untitled${Math.floor(Math.random() * 1000)}`;
-    
-    console.log("Submitting CV with name:", finalName);
-    
-    // Hiển thị trạng thái đang xử lý
+    const finalName = cvName || formData.name || `Untitled${Math.floor(Math.random() * 1000)}`;
     setIsSubmitting(true);
-    
-    // Lấy thông tin template từ formData
+
     const templateId = formData.template?.id || getDefaultTemplate().id;
     const templateInfo = getTemplateById(templateId);
     
-    // Format dữ liệu theo đúng cấu trúc API yêu cầu
     const formattedData = {
       name: finalName,
       template: {
@@ -364,83 +322,54 @@ const NewCV = () => {
       },
       customFields: formData.customFields || []
     };
-    
-    // Phần xử lý token và gọi API
+
     try {
-      // Lấy token từ localStorage với đúng key
       const token = localStorage.getItem('token');
-      
-      console.log('Using token:', token ? 'Found token' : 'No token found');
-      
       if (!token) {
-        console.error('No token found in localStorage');
-        toast.error('You need to login to save your CV');
+        toast.error('You need to login to save your Resume');
         setIsSubmitting(false);
         return;
       }
-      
-      // Xác định phương thức và URL API dựa vào việc đang chỉnh sửa hay tạo mới
+
+      // Xác định phương thức và URL API dựa vào mode
       const method = isEditing ? 'PUT' : 'POST';
       const apiUrl = isEditing 
         ? `http://localhost:5000/api/cv/${cvId}`
         : 'http://localhost:5000/api/cv';
-      
-      console.log(`${isEditing ? 'Updating' : 'Saving'} CV to API:`, apiUrl);
-      
-      // Gọi API để lưu CV
-      fetch(apiUrl, {
+
+      const response = await fetch(apiUrl, {
         method: method,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(formattedData)
-      })
-      .then(response => {
-        console.log('Response status:', response.status);
-        
-        if (!response.ok) {
-          if (response.status === 401) {
-            toast.error('Your session has expired. Please login again.');
-            // Xóa token hết hạn
-            localStorage.removeItem('token');
-            throw new Error('Authentication failed');
-          } else {
-            return response.text().then(text => {
-              try {
-                const errorData = JSON.parse(text);
-                throw new Error(errorData.message || `Error ${response.status}`);
-              } catch (e) {
-                throw new Error(`Error ${response.status}: ${text || response.statusText}`);
-              }
-            });
-          }
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          toast.error('Your session has expired. Please login again.');
+          localStorage.removeItem('token');
+          throw new Error('Authentication failed');
         }
-        return response.json();
-      })
-      .then(data => {
-        console.log('CV saved successfully:', data);
-        
-        toast.success(`CV "${finalName}" saved successfully!`);
-        
-        // Chuyển hướng đến trang Dashboard
-        navigate('/dashboard', { 
-          state: { 
-            message: 'CV saved successfully!',
-            cvId: data.data?._id
-          } 
-        });
-      })
-      .catch(error => {
-        console.error('Error saving CV:', error);
-        toast.error(`Failed to save CV: ${error.message}`);
-      })
-      .finally(() => {
-        setIsSubmitting(false);
+        throw new Error(`Error ${response.status}: ${await response.text()}`);
+      }
+
+      const data = await response.json();
+      toast.success(`Resume "${finalName}" ${isEditing ? 'updated' : 'saved'} successfully!`);
+
+      // Chuyển hướng về trang được chỉ định hoặc dashboard
+      navigate(returnPath, {
+        state: { 
+          message: `Resume ${isEditing ? 'updated' : 'saved'} successfully!`,
+          cvId: data.data?._id
+        },
+        replace: true
       });
     } catch (error) {
-      console.error('Error in API call preparation:', error);
-      toast.error('An error occurred while preparing the request.');
+      console.error('Error saving Resume:', error);
+      toast.error(`Failed to save Resume: ${error.message}`);
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -648,44 +577,6 @@ const NewCV = () => {
     }
   }, [location.state]);
 
-  // Hàm hiển thị thông báo
-  const showNotification = (message) => {
-    // Implement your notification logic here
-    console.log(message);
-    // Ví dụ: toast(message) nếu dùng react-toastify
-  };
-
-  const saveResume = async () => {
-    try {
-      const resumeData = {
-        // Your resume data structure
-      };
-      
-      const response = await api.post('/resumes', resumeData);
-      setResumeId(response.data.id);
-      showNotification('Resume saved successfully!');
-    } catch (error) {
-      const errorMessage = handleApiError(error, navigate);
-      setError(errorMessage);
-    }
-  }
-
-  // Nếu dùng callApi cũ
-  const generateResumeWithAI = async () => {
-    try {
-      setGenerating(true);
-      const data = await callApi('/generate-resume', 'POST', { 
-        prompt, sections 
-      });
-      setGeneratedContent(data.content);
-    } catch (error) {
-      const errorMessage = handleApiError(error, navigate);
-      setError(errorMessage);
-    } finally {
-      setGenerating(false);
-    }
-  }
-
   // Thêm hàm xử lý khi đóng popup xác nhận
   const handleCloseSaveConfirmation = () => {
     setShowSaveConfirmation(false);
@@ -784,6 +675,28 @@ const NewCV = () => {
     };
   }, [showFullPagePreview, showNameModal, showSaveConfirmation, showConfirmationDialog]);
 
+  // Thêm useEffect để theo dõi thay đổi của isEditing
+  useEffect(() => {
+    if (isEditing) {
+      setShowPreview(true);
+    }
+  }, [isEditing]);
+
+  // Add useEffect to handle tips data
+  useEffect(() => {
+    if (location.state?.tips && location.state?.isNewResume) {
+      setTips(location.state.tips);
+      setShowHints(true);
+      setIsNewResume(true);
+      
+      // Show a notification that tips are available
+      toast.info("Job-specific resume tips are available! Check the hints panel.", {
+        autoClose: 5000,
+        position: "bottom-right",
+      });
+    }
+  }, [location.state]);
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -791,7 +704,6 @@ const NewCV = () => {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="py-4">
             <div className="flex items-center justify-between">
-              {/* Nút Back bên trái */}
               <button
                 onClick={goBack}
                 className="text-gray-600 hover:text-gray-900 flex items-center"
@@ -799,7 +711,6 @@ const NewCV = () => {
                 <ArrowLeft className="mr-1" /> Back
               </button>
               
-              {/* Nút Save màu xanh có icon bên phải */}
               <button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
@@ -815,7 +726,7 @@ const NewCV = () => {
                 ) : (
                   <>
                     <Save className="h-4 w-4" />
-                    <span className="ml-2">Save</span>
+                    <span className="ml-2">{isEditing ? 'Update' : 'Save'}</span>
                   </>
                 )}
               </button>
@@ -925,8 +836,8 @@ const NewCV = () => {
             }`}
             style={{
               overscrollBehaviorX: !showPreview ? 'none' : 'auto',
-              msOverflowStyle: !showPreview ? 'none' : 'auto',  // For IE and Edge
-              scrollbarWidth: !showPreview ? 'none' : 'auto',   // For Firefox
+              msOverflowStyle: !showPreview ? 'none' : 'auto',
+              scrollbarWidth: !showPreview ? 'none' : 'auto',
             }}
           >
             <div className={`w-full flex justify-center ${!showPreview ? 'overflow-x-hidden' : ''}`}>
@@ -1001,7 +912,6 @@ const NewCV = () => {
                 onClick={() => {
                   setShowPreview(!showPreview);
                   if (showPreview) {
-                    // If we're hiding preview, also close full page preview if it's open
                     setShowFullPagePreview(false);
                   }
                 }}
@@ -1132,6 +1042,7 @@ const NewCV = () => {
                   currentAdditionalSection={currentAdditionalSection}
                   formData={formData}
                   mode={showHints ? 'hints' : 'ai'}
+                  tips={tips}
                 />
               </div>
             </motion.div>
@@ -1148,7 +1059,7 @@ const NewCV = () => {
           isEditing && formData.name 
             ? formData.name
             : (formData.personalInfo?.firstName 
-                ? `${formData.personalInfo.firstName}'s CV` 
+                ? `${formData.personalInfo.firstName}'s Resume` 
                 : `Untitled${Math.floor(Math.random() * 1000)}`)
         }
       />
@@ -1194,7 +1105,7 @@ const NewCV = () => {
                 {validationErrors.professionalHeadline && <li>Professional headline is required</li>}
               </ul>
             </div>
-            <p className="text-gray-600 mb-5">Do you still want to save this CV?</p>
+            <p className="text-gray-600 mb-5">Do you still want to save this Resume?</p>
             <div className="flex justify-end space-x-3">
               <button
                 onClick={handleCancelConfirmation}

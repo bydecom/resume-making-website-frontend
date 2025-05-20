@@ -2,23 +2,33 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import ResumesSection from './components/ResumesSection';
 import CVSection from './components/CVSection';
-import TemplatesSection from './components/TemplatesSection';
-import { resumeData, cvData, templates } from './data';
+import JDSection from './components/JDSection';
+import { resumeData, templates } from './data';
 import CreateCVModal from '../../components/CreateCVModal';
-import ScrollToTop from '../Home/components/ScrollToTop';
+import ScrollToTop from '../../components/ScrollToTop';
 import { getDefaultTemplate } from '../../templates';
-import { Plus } from 'lucide-react';
-
+import { Plus, Download } from 'lucide-react';
+import CVDownloadModal from '../../components/CVDownloadModal';
+import { useCVData } from '../../contexts/CVDataContext';
+import axiosInstance from '../../utils/axios';
 const Dashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { setCVData: setContextCVData } = useCVData();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [resumes, setResumes] = useState(resumeData);
-  const [cvData, setCvData] = useState({ cvs: [] });
-  
+  const [cvData, setCvData] = useState({ cv: null });
+  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
+  const [selectedCV, setSelectedCV] = useState(null);
   // States for CV data fetching and processing
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  // Added state for job descriptions
+  const [jobDescriptions, setJobDescriptions] = useState([]);
+  const [jobDescriptionsLoading, setJobDescriptionsLoading] = useState(true);
+  const [jobDescriptionsError, setJobDescriptionsError] = useState(null);
+  // Active section state - changed default to 'resumes'
+  const [activeSection, setActiveSection] = useState('resumes');
   
   const handleCreateNewClick = () => {
     setShowCreateModal(true);
@@ -52,12 +62,13 @@ const Dashboard = () => {
           throw new Error(`Failed to delete CV: ${response.statusText}`);
         }
 
-        // If delete successful, update the UI
-        setResumes(resumes.filter(resume => resume.id !== id));
-        setCvData(prevData => ({
-          ...prevData,
-          cvs: prevData.cvs.filter(cv => (cv._id || cv.id) !== id)
-        }));
+        // Set CV to null in both local state and context
+        setCvData({ cv: null });
+        setContextCVData({ 
+          cv: null,
+          isLoading: false,
+          error: null
+        });
 
         // Show success message
         alert('CV deleted successfully!');
@@ -80,7 +91,7 @@ const Dashboard = () => {
         throw new Error('No authentication token found');
       }
       
-      // Actual API call to fetch CVs
+      // Actual API call to fetch CV
       const response = await fetch('http://localhost:5000/api/cv', {
         method: 'GET',
         headers: {
@@ -95,21 +106,81 @@ const Dashboard = () => {
       
       const data = await response.json();
       
-      // Process the CV data
-      const processedCVs = data.data.map(cv => ({
-        ...cv,
-        template: cv.template || { id: getDefaultTemplate().id },
-        score: calculateCVScore(cv),
-        progress: calculateCVProgress(cv)
-      }));
+      // Process the CV data - assuming API returns a single CV or the first one
+      // If data.data is an array, take the first item (the active CV)
+      const cvItem = Array.isArray(data.data) ? data.data[0] : data.data;
       
-      setCvData({ cvs: processedCVs });
+      if (cvItem) {
+        const processedCV = {
+          ...cvItem,
+          template: cvItem.template || { id: getDefaultTemplate().id },
+          score: calculateCVScore(cvItem),
+          progress: calculateCVProgress(cvItem)
+        };
+        
+        // Update local state with single CV
+        setCvData({ cv: processedCV });
+        
+        // Store in global context
+        setContextCVData({
+          cv: processedCV,
+          isLoading: false,
+          error: null
+        });
+      } else {
+        // No CV found
+        setCvData({ cv: null });
+        setContextCVData({
+          cv: null,
+          isLoading: false,
+          error: null
+        });
+      }
       
     } catch (err) {
       console.error('Error fetching CV data:', err);
       setError(err.message);
+      setContextCVData({
+        cv: null,
+        isLoading: false,
+        error: err.message
+      });
     } finally {
       setIsLoading(false);
+    }
+  };
+  
+  // Fetch job descriptions from API
+  const fetchJobDescriptions = async () => {
+    setJobDescriptionsLoading(true);
+    
+    try {
+      // Get token from localStorage
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
+      // API call to fetch job descriptions
+      const response = await axiosInstance.get('http://localhost:5000/api/job-descriptions', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      // If successful, update state with job descriptions
+      if (response.data.status === 'success') {
+        setJobDescriptions(response.data.data || []);
+      } else {
+        throw new Error(response.data.message || 'Failed to fetch job descriptions');
+      }
+    } catch (err) {
+      console.error('Error fetching job descriptions:', err);
+      setJobDescriptionsError(err.message || 'Error loading job descriptions');
+    } finally {
+      setJobDescriptionsLoading(false);
     }
   };
   
@@ -171,31 +242,32 @@ const Dashboard = () => {
     }
   }, [location.state]);
   
-  // Fetch CV data when component mounts
+  // Fetch CV data and job descriptions when component mounts
   useEffect(() => {
     fetchCVData();
+    fetchJobDescriptions();
   }, []);
 
   const handleCreateNewResume = () => {
     console.log('Current CV data:', cvData); // For debugging
     
     // Chuẩn bị dữ liệu CV nếu có
-    const selectedCV = cvData && cvData.cvs && cvData.cvs.length > 0 
+    const selectedCV = cvData && cvData.cv
       ? {
-          ...cvData.cvs[0],
-          personalInfo: cvData.cvs[0].personalInfo || {},
-          summary: cvData.cvs[0].summary || '',
-          experience: cvData.cvs[0].experience || [],
-          education: cvData.cvs[0].education || [],
-          skills: cvData.cvs[0].skills || [],
-          projects: cvData.cvs[0].projects || [],
-          certifications: cvData.cvs[0].certifications || [],
-          languages: cvData.cvs[0].languages || [],
-          template: cvData.cvs[0].template || { id: getDefaultTemplate().id },
-          _id: cvData.cvs[0]._id,
-          name: cvData.cvs[0].name || 'Untitled CV',
-          progress: calculateCVProgress(cvData.cvs[0]),
-          score: calculateCVScore(cvData.cvs[0])
+          ...cvData.cv,
+          personalInfo: cvData.cv.personalInfo || {},
+          summary: cvData.cv.summary || '',
+          experience: cvData.cv.experience || [],
+          education: cvData.cv.education || [],
+          skills: cvData.cv.skills || [],
+          projects: cvData.cv.projects || [],
+          certifications: cvData.cv.certifications || [],
+          languages: cvData.cv.languages || [],
+          template: cvData.cv.template || { id: getDefaultTemplate().id },
+          _id: cvData.cv._id,
+          name: cvData.cv.name || 'Untitled CV',
+          progress: calculateCVProgress(cvData.cv),
+          score: calculateCVScore(cvData.cv)
         }
       : null;
 
@@ -205,26 +277,77 @@ const Dashboard = () => {
     });
   };
 
+  const handleDownloadCV = (cv) => {
+    setSelectedCV(cv);
+    setIsDownloadModalOpen(true);
+  };
+
   return (
     <div className="bg-gray-100">
       {/* Main content */}
       <main className="container mx-auto px-4 md:px-6 py-8">
         <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-6 mt-16">
-           
+          {/* Section navigation tabs - reordered tabs */}
+          <div className="bg-white rounded-lg shadow-sm mb-6 mt-16">
+            <div className="flex border-b">
+              <button
+                className={`px-6 py-4 text-lg font-medium ${
+                  activeSection === 'resumes' 
+                    ? 'text-blue-600 border-b-2 border-blue-600' 
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+                onClick={() => setActiveSection('resumes')}
+              >
+                Your Resumes
+              </button>
+              <button
+                className={`px-6 py-4 text-lg font-medium ${
+                  activeSection === 'cv' 
+                    ? 'text-blue-600 border-b-2 border-blue-600' 
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+                onClick={() => setActiveSection('cv')}
+              >
+                Your CV
+              </button>
+              <button
+                className={`px-6 py-4 text-lg font-medium ${
+                  activeSection === 'job-descriptions' 
+                    ? 'text-blue-600 border-b-2 border-blue-600' 
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+                onClick={() => setActiveSection('job-descriptions')}
+              >
+                Your Job Applications
+              </button>
+            </div>
           </div>
           
-          {/* Content sections - thêm class 'scrollable' */}
-          <div className="scrollable">
-            <CVSection 
-              cvData={cvData} 
-              isLoading={isLoading} 
-              onEditCV={handleEditCV}
-              onDeleteCV={handleDeleteCV}
-              setCvData={setCvData}
-            />
-            <ResumesSection resumeData={resumes} />
-            <TemplatesSection templates={templates} />
+          {/* Content sections */}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            {activeSection === 'resumes' && (
+              <ResumesSection resumeData={resumes} />
+            )}
+            
+            {activeSection === 'cv' && (
+              <CVSection 
+                cvData={{ cv: cvData.cv }} 
+                isLoading={isLoading} 
+                onEditCV={handleEditCV}
+                onDeleteCV={handleDeleteCV}
+                onDownloadCV={handleDownloadCV}
+                setCvData={setCvData}
+              />
+            )}
+            
+            {activeSection === 'job-descriptions' && (
+              <JDSection 
+                jobDescriptions={jobDescriptions} 
+                isLoading={jobDescriptionsLoading} 
+                error={jobDescriptionsError}
+                refreshJobDescriptions={fetchJobDescriptions}
+              />
+            )}
           </div>
         </div>
       </main>
@@ -235,9 +358,19 @@ const Dashboard = () => {
         onClose={() => setShowCreateModal(false)} 
       />
       
+      {/* Add CVDownloadModal */}
+      <CVDownloadModal
+        isOpen={isDownloadModalOpen}
+        onClose={() => {
+          setIsDownloadModalOpen(false);
+          setSelectedCV(null);
+        }}
+        template={selectedCV?.template}
+        formData={selectedCV}
+      />
+      
       {/* Nút scroll to top */}
       <ScrollToTop />
-
     </div>
   );
 };

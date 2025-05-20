@@ -24,11 +24,16 @@ const CertificationsStep = ({ data = [], updateData, hideTitle = false }) => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    const newValue = type === 'checkbox' ? checked : value;
+    let finalValue = value;
+    
+    // Trim whitespace for URL field
+    if (name === 'credentialURL') {
+      finalValue = value.trim();
+    }
     
     const updatedCertification = {
       ...currentCertification,
-      [name]: newValue
+      [name]: finalValue
     };
     setCurrentCertification(updatedCertification);
     

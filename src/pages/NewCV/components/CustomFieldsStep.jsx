@@ -20,10 +20,16 @@ const CustomFieldsStep = ({ data = [], updateData }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    let finalValue = value;
+    
+    // If the value looks like a URL, trim whitespace
+    if (name === 'value' && (value.startsWith('http://') || value.startsWith('https://') || value.includes('www.'))) {
+      finalValue = value.trim();
+    }
     
     const updatedField = {
       ...currentField,
-      [name]: value
+      [name]: finalValue
     };
     setCurrentField(updatedField);
     

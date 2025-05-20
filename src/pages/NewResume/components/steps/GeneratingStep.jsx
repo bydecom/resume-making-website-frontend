@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axiosInstance from '../../../../utils/axios';
 import MatchedResumeTemplate from '../../../../templates/MatchedResumeTemplate';
 
@@ -31,12 +32,36 @@ const steps = [
   }
 ];
 
-const GeneratingStep = ({ onComplete, cvId, jobDescriptionId }) => {
+const GeneratingStep = ({ onComplete, cvId, jobDescriptionId, templateId }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [progress, setProgress] = useState(0);
   const [matchedResume, setMatchedResume] = useState(null);
   const [error, setError] = useState(null);
   const [isReviewing, setIsReviewing] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (!cvId) {
+      console.error('No CV ID provided to GeneratingStep');
+      setError('No CV ID provided. Please select a CV first.');
+    } else if (typeof cvId !== 'string' && typeof cvId !== 'object') {
+      console.error('Invalid CV ID format:', cvId, typeof cvId);
+      setError('Invalid CV ID format. Please try again.');
+    } else {
+      console.log('GeneratingStep initialized with valid CV ID:', cvId);
+    }
+
+    if (!jobDescriptionId) {
+      console.error('No Job Description ID provided to GeneratingStep');
+      setError('No Job Description ID provided. Please provide a job description first.');
+    }
+
+    if (!templateId) {
+      console.error('No Template ID provided to GeneratingStep');
+      setError('No Template ID provided. Please select a template first.');
+    }
+  }, [cvId, jobDescriptionId, templateId]);
 
   useEffect(() => {
     const generateResume = async () => {
@@ -44,7 +69,8 @@ const GeneratingStep = ({ onComplete, cvId, jobDescriptionId }) => {
         // Make API call with cvId and jobDescriptionId
         const response = await axiosInstance.post('/api/resumes/match', {
           cvId,
-          jobDescriptionId
+          jobDescriptionId,
+          templateId
         });
 
         if (response.data.success) {
@@ -84,7 +110,7 @@ const GeneratingStep = ({ onComplete, cvId, jobDescriptionId }) => {
     }, 50);
 
     return () => clearInterval(interval);
-  }, [cvId, jobDescriptionId]);
+  }, [cvId, jobDescriptionId, templateId]);
 
   useEffect(() => {
     // Update current step based on progress
@@ -93,7 +119,16 @@ const GeneratingStep = ({ onComplete, cvId, jobDescriptionId }) => {
   }, [progress]);
 
   const handleApprove = () => {
-    onComplete?.(matchedResume);
+    // Nếu có callback onComplete thì gọi nó
+    if (onComplete) {
+      onComplete(matchedResume);
+    } else {
+      // Lấy ID của resume mới được tạo từ response API
+      const newResumeId = matchedResume._id;
+      
+      // Chuyển hướng trực tiếp đến trang edit với ID
+      navigate(`/edit-resume/${newResumeId}`);
+    }
   };
 
   const handleRegenerateClick = async () => {

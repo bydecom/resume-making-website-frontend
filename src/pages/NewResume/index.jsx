@@ -4,7 +4,9 @@ import ReviewCVStep from './components/steps/ReviewCVStep';
 import ChooseMethodStep from './components/steps/ChooseMethodStep';
 import JobDescriptionStep from './components/steps/JobDescriptionStep';
 import GeneratingStep from './components/steps/GeneratingStep';
+import AnalyzingStep from './components/steps/AnalyzingStep';
 import { getDefaultTemplate } from '../../templates';
+import axiosInstance from '../../utils/axios';
 
 const steps = [
   {
@@ -24,38 +26,23 @@ const steps = [
   },
   {
     id: 4,
-    title: 'Generating',
-    description: 'Creating your tailored resume'
+    title: 'Processing',
+    description: 'Processing your resume'
   }
 ];
 
 const NewResume = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [currentStep, setCurrentStep] = useState(location.state?.currentStep || 1);
-  const [cvData, setCvData] = useState({ cvs: [] });
+  const [currentStep, setCurrentStep] = useState(1);
   const [selectedCV, setSelectedCV] = useState(location.state?.selectedCV || null);
   const [selectedMethod, setSelectedMethod] = useState(null);
   const [jobDescription, setJobDescription] = useState(null);
+  const [selectedTemplate, setSelectedTemplate] = useState(location.state?.selectedTemplate || null);
+  const [cvData, setCvData] = useState({ cvs: [] });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // Effect để xử lý khi quay lại từ EditCV
-  useEffect(() => {
-    if (location.state?.forceCVRefresh) {
-      fetchCVData();
-    }
-  }, [location.state?.forceCVRefresh]);
-
-  // Effect để scroll lên đầu khi thay đổi step
-  useEffect(() => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth' // hoặc 'instant' nếu bạn muốn scroll ngay lập tức
-    });
-  }, [currentStep]);
-
-  // Fetch CV data from API
+  // Fetch CV data
   const fetchCVData = async () => {
     setIsLoading(true);
     try {
@@ -161,6 +148,7 @@ const NewResume = () => {
   };
 
   const handleCVSelect = (cv) => {
+    console.log('CV selected in NewResume:', cv);
     setSelectedCV(cv);
     handleNext();
   };
@@ -171,7 +159,6 @@ const NewResume = () => {
   };
 
   const handleJobDescriptionSubmit = (data) => {
-    // Ensure we have the _id from the saved job description
     if (!data._id) {
       console.error('No job description ID received');
       return;
@@ -180,8 +167,45 @@ const NewResume = () => {
     handleNext();
   };
 
-  const handleGenerationComplete = () => {
-    navigate('/dashboard');
+  // Function to handle navigation to CreateNew after generating resume
+  const handleGeneratedResume = (matchedResume) => {
+    console.log("Received matched resume data:", matchedResume);
+    
+    // Thay vì điều hướng đến /resume/create-new
+    // Điều hướng trực tiếp đến /edit-resume/:id
+    navigate(`/edit-resume/${matchedResume._id}`);
+  };
+
+  // Function to handle navigation to CreateNew after analyzing CV and job description
+  const handleAnalyzedResume = (tips) => {
+    console.log("Received resume tips:", tips);
+    // Navigate to CreateNew with the tips data
+    navigate('/resume/create-new', { 
+      state: { 
+        fromAnalyzing: true,
+        tips,
+        cvId: selectedCV?._id,
+        jobDescriptionId: jobDescription?._id
+      } 
+    });
+  };
+
+  const handleJobDescriptionComplete = (jdData) => {
+    if (jdData.method === 'useAI') {
+      // Show GeneratingStep
+      setCurrentStep(<GeneratingStep 
+        onComplete={handleGeneratedResume}
+        cvId={selectedCV._id} 
+        jobDescriptionId={jdData._id} 
+      />);
+    } else {
+      // Show AnalyzingStep
+      setCurrentStep(<AnalyzingStep 
+        cvId={selectedCV._id} 
+        jobDescriptionId={jdData._id}
+        onComplete={handleAnalyzedResume}
+      />);
+    }
   };
 
   const renderStepContent = () => {
@@ -204,9 +228,19 @@ const NewResume = () => {
           />
         );
       case 4:
-        return (
+        console.log('Rendering step 4 with CV:', selectedCV);
+        console.log('Selected CV ID being passed to GeneratingStep:', selectedCV?._id);
+        console.log('Selected template being passed to GeneratingStep:', selectedTemplate?.id);
+        
+        return selectedMethod === 'useAI' ? (
           <GeneratingStep 
-            onComplete={handleGenerationComplete}
+            onComplete={handleGeneratedResume}
+            cvId={selectedCV?._id}
+            jobDescriptionId={jobDescription?._id}
+            templateId={selectedTemplate?.id || 'professionalBlue'}
+          />
+        ) : (
+          <AnalyzingStep 
             cvId={selectedCV?._id}
             jobDescriptionId={jobDescription?._id}
           />

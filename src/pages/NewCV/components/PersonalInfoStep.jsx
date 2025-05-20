@@ -18,9 +18,16 @@ const PersonalInfoStep = ({ data, updateData, nextStep, externalErrors }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    let finalValue = value;
+    
+    // Trim whitespace for URL fields
+    if (name === 'website' || name === 'linkedin') {
+      finalValue = value.trim();
+    }
+    
     const updatedData = {
       ...localData,
-      [name]: value
+      [name]: finalValue
     };
     
     setLocalData(updatedData);

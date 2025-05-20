@@ -1,0 +1,239 @@
+import React, { useState, useEffect, useRef } from 'react';
+import '@fortawesome/fontawesome-free/css/all.min.css';
+import CVPreview from '../pages/NewCV/components/CVPreview';
+import { templates } from '../templates';
+import { exportCVToPDF } from '../services/pdfExportService';
+import apiInstance from '../utils/axios';
+
+const CVDownloadModal = ({ isOpen, onClose, template, formData }) => {
+  // Sử dụng template ID được truyền vào từ prop template hoặc từ formData
+  const initialTemplateId = template?.id || formData?.template?.id || Object.keys(templates)[0];
+  const [selectedTemplateId, setSelectedTemplateId] = useState(initialTemplateId);
+  const [showAllTemplates, setShowAllTemplates] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [fontsReady, setFontsReady] = useState(false);
+  
+  // Tạo ref để truy cập đến phần tử CV
+  const cvElementRef = useRef(null);
+  
+  // Đảm bảo cập nhật selectedTemplateId khi prop template thay đổi
+  useEffect(() => {
+    if (template?.id) {
+      setSelectedTemplateId(template.id);
+    }
+  }, [template]);
+
+  // Theo dõi trạng thái tải font
+  useEffect(() => {
+    // Đảm bảo tất cả fonts được tải trước khi xuất PDF
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => {
+        console.log('All fonts are loaded and ready');
+        setFontsReady(true);
+      });
+    } else {
+      // Fallback cho trình duyệt không hỗ trợ document.fonts
+      setTimeout(() => {
+        setFontsReady(true);
+      }, 2000);
+    }
+  }, [isOpen]);
+
+  const downloadTips = [
+    "Your CV will be downloaded as a PDF",
+    "Double-check the formatting in the preview",
+    "Save different versions for different job applications",
+    "Review the PDF after downloading",
+    "Ensure your contact information is correct",
+    "Check if all sections are properly aligned"
+  ];
+
+  const handleDownload = async () => {
+    if (!fontsReady) {
+      alert('Fonts are still loading. Please wait a moment and try again.');
+      return;
+    }
+
+    try {
+      // Log the download action first
+      const cvId = formData._id || formData.id;
+      if (cvId) {
+        try {
+          await apiInstance.get(`/api/downloads/cv/${cvId}`, {
+            params: {
+              format: 'pdf',
+              templateId: selectedTemplateId,
+              templateName: templates[selectedTemplateId]?.name || 'Default Template'
+            }
+          });
+          console.log('CV download logged successfully');
+        } catch (error) {
+          console.error('Error logging CV download:', error);
+          // Continue with download even if logging fails
+        }
+      }
+
+      // Then generate and download the PDF
+      await exportCVToPDF({
+        cvElement: cvElementRef.current,
+        formData,
+        onStatusChange: setIsDownloading,
+        onError: (error) => {
+          alert('Failed to generate PDF. Please try again.');
+        }
+      });
+    } catch (error) {
+      console.error('Error in handleDownload:', error);
+    }
+  };
+
+  // Nếu không mở modal thì không render gì
+  if (!isOpen) return null;
+
+  const previewData = {
+    ...formData,
+    template: { id: selectedTemplateId }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-white z-50 flex flex-col">
+      {/* Header */}
+      <div className="px-6 py-4 border-b bg-white flex-shrink-0 flex items-center justify-between">
+        <h2 className="text-xl font-semibold">Download CV</h2>
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={onClose}
+            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+          <button 
+            onClick={handleDownload}
+            disabled={isDownloading || !fontsReady}
+            className={`px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2 ${
+              (isDownloading || !fontsReady) ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+          >
+            {/* Sử dụng SVG thay cho FontAwesome icon để đảm bảo hiển thị trong PDF */}
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+            {isDownloading ? 'Generating PDF...' : (!fontsReady ? 'Loading Fonts...' : 'Download PDF')}
+          </button>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 overflow-hidden">
+        <div className="h-full flex">
+          {/* Left Column - Template Selection */}
+          <div className="w-1/4 border-r bg-gray-50 flex flex-col">
+            <div className="flex-shrink-0 p-6 pb-3 bg-gray-50 border-b">
+              <div className="flex items-center text-blue-600">
+                {/* Sử dụng SVG thay cho FontAwesome icon */}
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M8 5a1 1 0 100 2h5.586l-1.293 1.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L13.586 5H8zM12 15a1 1 0 100-2H6.414l1.293-1.293a1 1 0 10-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L6.414 15H12z" />
+                </svg>
+                <h3 className="text-lg font-medium">Select Template</h3>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-hidden flex flex-col p-6 pt-3">
+              <div className="flex-1 overflow-y-auto">
+                <div className="space-y-3 px-0.5">
+                  {Object.values(showAllTemplates ? templates : Object.fromEntries(
+                    Object.entries(templates).slice(0, 5)
+                  )).map(template => (
+                    <div 
+                      key={template.id}
+                      className={`p-3 border rounded-lg cursor-pointer transition-all duration-200 hover:z-10 ${
+                        selectedTemplateId === template.id 
+                          ? 'border-blue-500 bg-blue-50 shadow-sm' 
+                          : 'border-gray-200 hover:border-blue-300 hover:shadow-sm'
+                      }`}
+                      style={{
+                        transform: selectedTemplateId === template.id ? 'scale(1.01)' : 'scale(1)',
+                        transformOrigin: 'center'
+                      }}
+                      onClick={() => setSelectedTemplateId(template.id)}
+                    >
+                      <div className="font-medium text-sm text-gray-900">{template.name}</div>
+                      <div className="text-xs text-gray-500 mt-0.5">{template.description}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Middle Column - CV Preview */}
+          <div className="flex-1 bg-gray-100 p-6 overflow-y-auto">
+            <div className="max-w-[850px] mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
+              <div className="cv-wrapper" ref={cvElementRef}>
+                <CVPreview formData={previewData} />
+              </div>
+            </div>
+          </div>
+          
+          {/* Right Column - Download Tips */}
+          <div className="w-1/4 border-l bg-gray-50 flex flex-col">
+            <div className="flex-shrink-0 p-6 pb-3 bg-gray-50 border-b">
+              <div className="flex items-center text-yellow-600">
+                {/* Sử dụng SVG thay cho FontAwesome icon */}
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.002z" />
+                </svg>
+                <h3 className="text-lg font-medium">Download Tips</h3>
+              </div>
+            </div>
+            
+            <div className="flex-1 overflow-hidden flex flex-col p-6 pt-3">
+              <div className="flex-1 overflow-y-auto">
+                <div className="space-y-4">
+                  {downloadTips.map((tip, index) => (
+                    <div 
+                      key={index} 
+                      className="p-4 bg-yellow-50 rounded-lg border border-yellow-100 hover:shadow-md transition-shadow"
+                    >
+                      <p className="text-sm text-gray-700">{tip}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex-shrink-0 mt-6">
+                <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
+                  <h4 className="font-medium text-blue-700 mb-2">Ready to download?</h4>
+                  <p className="text-sm text-gray-700">
+                    Click the Download PDF button to save your CV.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* CSS cho việc export PDF */}
+      <style jsx global>{`
+        /* Styles áp dụng đặc biệt khi đang export PDF */
+        .exporting-pdf .fas,
+        .exporting-pdf .fab,
+        .exporting-pdf .far {
+          /* Tăng visibility của icons khi export */
+          font-weight: 900 !important;
+          font-family: 'Font Awesome 5 Free' !important;
+        }
+        
+        /* Tăng kích thước icons khi export để đảm bảo hiển thị rõ nét hơn */
+        .exporting-pdf .fas:before,
+        .exporting-pdf .fab:before,
+        .exporting-pdf .far:before {
+          font-size: 1.2em !important;
+        }
+      `}</style>
+    </div>
+  );
+};
+
+export default CVDownloadModal;

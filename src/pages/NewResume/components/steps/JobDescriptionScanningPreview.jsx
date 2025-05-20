@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axiosInstance from '../../../../utils/axios';
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 const JobDescriptionScanningPreview = ({ isOpen, onComplete, data }) => {
   const [progress, setProgress] = useState(0);
@@ -10,8 +12,7 @@ const JobDescriptionScanningPreview = ({ isOpen, onComplete, data }) => {
   const [tempEditData, setTempEditData] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
-
-  const scanSteps = [
+  const [scanSteps, setScanSteps] = useState([
     {
       id: 'basic',
       label: 'Basic Information',
@@ -36,7 +37,7 @@ const JobDescriptionScanningPreview = ({ isOpen, onComplete, data }) => {
       fields: ['keywords', 'applicationDeadline', 'contactInfo'],
       status: 'pending'
     }
-  ];
+  ]);
 
   useEffect(() => {
     if (isOpen && data) {
@@ -86,7 +87,14 @@ const JobDescriptionScanningPreview = ({ isOpen, onComplete, data }) => {
   };
 
   const updateStepStatus = (stepIndex, status) => {
-    scanSteps[stepIndex].status = status;
+    setScanSteps(prevSteps => {
+      const newSteps = [...prevSteps];
+      newSteps[stepIndex] = {
+        ...newSteps[stepIndex],
+        status: status
+      };
+      return newSteps;
+    });
   };
 
   const handleEditClick = (fieldName) => {
@@ -188,9 +196,9 @@ const JobDescriptionScanningPreview = ({ isOpen, onComplete, data }) => {
         },
         applicationDeadline: jdData.applicationDeadline || '',
         contactInfo: {
-          name: jdData.contactInfo?.name || 'N/A',
-          email: jdData.contactInfo?.email || 'N/A',
-          phone: jdData.contactInfo?.phone || 'N/A'
+          name: jdData.contactInfo?.name || '',
+          email: jdData.contactInfo?.email || '',
+          phone: jdData.contactInfo?.phone || ''
         },
         language: 'en',
         status: 'draft',
@@ -208,12 +216,12 @@ const JobDescriptionScanningPreview = ({ isOpen, onComplete, data }) => {
   };
 
   const renderBasicInformation = () => (
-    <div className="bg-white rounded-lg border p-4">
-      <h3 className="text-xl font-semibold text-gray-800 mb-4">Basic Information</h3>
-      <div className="grid grid-cols-2 gap-4">
+    <div className="bg-white rounded-xl border p-6">
+      <h3 className="text-xl font-medium mb-6">Basic Information</h3>
+      <div className="grid grid-cols-2 gap-6">
         {/* Position */}
         <div>
-          <label className="text-sm font-medium text-gray-600 mb-1 block">Position</label>
+          <label className="text-sm text-gray-600 font-medium">Position</label>
           <div className="relative">
             {editingField === 'position' ? (
               <div className="flex items-center gap-2">
@@ -265,7 +273,7 @@ const JobDescriptionScanningPreview = ({ isOpen, onComplete, data }) => {
 
         {/* Company Name */}
         <div>
-          <label className="text-sm font-medium text-gray-600 mb-1 block">Company</label>
+          <label className="text-sm text-gray-600 font-medium">Company</label>
           <div className="relative">
             {editingField === 'companyName' ? (
               <div className="flex items-center gap-2">
@@ -317,7 +325,7 @@ const JobDescriptionScanningPreview = ({ isOpen, onComplete, data }) => {
 
         {/* Job Level */}
         <div>
-          <label className="text-sm font-medium text-gray-600 mb-1 block">Job Level</label>
+          <label className="text-sm text-gray-600 font-medium">Job Level</label>
           <div className="relative">
             {editingField === 'jobLevel' ? (
               <div className="flex items-center gap-2">
@@ -377,7 +385,7 @@ const JobDescriptionScanningPreview = ({ isOpen, onComplete, data }) => {
 
         {/* Employment Type */}
         <div>
-          <label className="text-sm font-medium text-gray-600 mb-1 block">Employment Type</label>
+          <label className="text-sm text-gray-600 font-medium">Employment Type</label>
           <div className="relative">
             {editingField === 'employmentType' ? (
               <div className="flex items-center gap-2">
@@ -434,7 +442,7 @@ const JobDescriptionScanningPreview = ({ isOpen, onComplete, data }) => {
 
         {/* Location */}
         <div>
-          <label className="text-sm font-medium text-gray-600 mb-1 block">Locations</label>
+          <label className="text-sm text-gray-600 font-medium">Locations</label>
           <div className="relative">
             {editingField === 'location' ? (
               <div className="space-y-2">
@@ -497,7 +505,7 @@ const JobDescriptionScanningPreview = ({ isOpen, onComplete, data }) => {
 
         {/* Remote Status */}
         <div>
-          <label className="text-sm font-medium text-gray-600 mb-1 block">Remote Status</label>
+          <label className="text-sm text-gray-600 font-medium">Remote Status</label>
           <div className="relative">
             {editingField === 'remoteStatus' ? (
               <div className="flex items-center gap-2">
@@ -552,7 +560,7 @@ const JobDescriptionScanningPreview = ({ isOpen, onComplete, data }) => {
 
         {/* Experience Required */}
         <div className="col-span-2">
-          <label className="text-sm font-medium text-gray-600 mb-1 block">Experience Required</label>
+          <label className="text-lg font-bold">Experience Required</label>
           <div className="relative">
             {editingField === 'experienceRequired' ? (
               <div className="space-y-4">
@@ -626,9 +634,9 @@ const JobDescriptionScanningPreview = ({ isOpen, onComplete, data }) => {
   );
 
   const renderJobDetails = () => (
-    <div className="bg-white rounded-lg border p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-xl font-semibold text-gray-800">Job Details</h3>
+    <div className="bg-white rounded-xl border p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-xl font-medium">Job Details</h3>
         {editingField === 'summary' ? (
           <div className="space-x-2">
             <button onClick={() => handleCancel('summary')} className="text-red-600 hover:text-red-700 text-sm">Cancel</button>
@@ -656,9 +664,9 @@ const JobDescriptionScanningPreview = ({ isOpen, onComplete, data }) => {
   );
 
   const renderRequirements = () => (
-    <div className="bg-white rounded-lg border p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-xl font-semibold text-gray-800">Requirements</h3>
+    <div className="bg-white rounded-xl border p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-xl font-medium">Requirements</h3>
         {editingField === 'requirements' ? (
           <div className="space-x-2">
             <button onClick={() => handleCancel('requirements')} className="text-red-600 hover:text-red-700 text-sm">Cancel</button>
@@ -706,77 +714,201 @@ const JobDescriptionScanningPreview = ({ isOpen, onComplete, data }) => {
   );
 
   const renderSkillsAndBenefits = () => (
-    <div className="bg-white rounded-lg border p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-xl font-semibold text-gray-800">Required Skills</h3>
+    <div className="space-y-8">
+      {/* Skills Required */}
+      <div className="bg-white rounded-xl border p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-xl font-medium">Required Skills</h3>
+          {editingField === 'keywords' ? (
+            <div className="space-x-2">
+              <button onClick={() => handleCancel('keywords')} className="text-red-600 hover:text-red-700 text-sm">Cancel</button>
+              <button onClick={() => handleSave('keywords')} className="text-green-600 hover:text-green-700 text-sm font-medium">Save</button>
+            </div>
+          ) : (
+            <button onClick={() => handleEditClick('keywords')} className="text-blue-600 hover:text-blue-700 text-sm">Edit</button>
+          )}
+        </div>
         {editingField === 'keywords' ? (
-          <div className="space-x-2">
-            <button onClick={() => handleCancel('keywords')} className="text-red-600 hover:text-red-700 text-sm">Cancel</button>
-            <button onClick={() => handleSave('keywords')} className="text-green-600 hover:text-green-700 text-sm font-medium">Save</button>
+          <div className="space-y-3">
+            <div className="flex flex-wrap gap-2">
+              {editedData.keywords?.map((skill, index) => (
+                <div key={index} className="flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                  <span>{skill}</span>
+                  <button
+                    onClick={() => handleRemoveArrayItem('keywords', index)}
+                    className="ml-2 text-blue-600 hover:text-blue-800"
+                  >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center gap-2 mt-2">
+              <input
+                type="text"
+                placeholder="Add a new skill"
+                className="flex-1 px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && e.target.value.trim()) {
+                    handleArrayItemChange('keywords', editedData.keywords?.length || 0, e.target.value.trim());
+                    e.target.value = '';
+                  }
+                }}
+              />
+              <button
+                onClick={() => {
+                  const input = document.querySelector('input[placeholder="Add a new skill"]');
+                  if (input.value.trim()) {
+                    handleArrayItemChange('keywords', editedData.keywords?.length || 0, input.value.trim());
+                    input.value = '';
+                  }
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Add
+              </button>
+            </div>
           </div>
         ) : (
-          <button onClick={() => handleEditClick('keywords')} className="text-blue-600 hover:text-blue-700 text-sm">Edit</button>
-        )}
-      </div>
-      {editingField === 'keywords' ? (
-        <div className="space-y-3">
           <div className="flex flex-wrap gap-2">
             {editedData.keywords?.map((skill, index) => (
-              <div key={index} className="flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
-                <span>{skill}</span>
+              <span key={index} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                {skill}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Benefits */}
+      <div className="bg-white rounded-xl border p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-xl font-medium">Benefits</h3>
+          {editingField === 'benefits' ? (
+            <div className="space-x-2">
+              <button onClick={() => handleCancel('benefits')} className="text-red-600 hover:text-red-700 text-sm">Cancel</button>
+              <button onClick={() => handleSave('benefits')} className="text-green-600 hover:text-green-700 text-sm font-medium">Save</button>
+            </div>
+          ) : (
+            <button onClick={() => handleEditClick('benefits')} className="text-blue-600 hover:text-blue-700 text-sm">Edit</button>
+          )}
+        </div>
+        {editingField === 'benefits' ? (
+          <div className="space-y-2">
+            {editedData.benefits?.map((benefit, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <input
+                  type="text"
+                  className="flex-1 px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500"
+                  value={benefit}
+                  onChange={(e) => handleArrayItemChange('benefits', index, e.target.value)}
+                />
                 <button
-                  onClick={() => handleRemoveArrayItem('keywords', index)}
-                  className="ml-2 text-blue-600 hover:text-blue-800"
+                  onClick={() => handleRemoveArrayItem('benefits', index)}
+                  className="text-red-500 hover:text-red-600"
                 >
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
             ))}
-          </div>
-          <div className="flex items-center gap-2 mt-2">
-            <input
-              type="text"
-              placeholder="Add a new skill"
-              className="flex-1 px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500"
-              onKeyPress={(e) => {
-                if (e.key === 'Enter' && e.target.value.trim()) {
-                  handleArrayItemChange('keywords', editedData.keywords?.length || 0, e.target.value.trim());
-                  e.target.value = '';
-                }
-              }}
-            />
             <button
-              onClick={() => {
-                const input = document.querySelector('input[placeholder="Add a new skill"]');
-                if (input.value.trim()) {
-                  handleArrayItemChange('keywords', editedData.keywords?.length || 0, input.value.trim());
-                  input.value = '';
-                }
-              }}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              onClick={() => handleAddArrayItem('benefits')}
+              className="text-blue-600 hover:text-blue-700 text-sm"
             >
-              Add
+              + Add Benefit
             </button>
           </div>
+        ) : (
+          <ul className="list-disc list-inside space-y-1">
+            {editedData.benefits?.map((benefit, index) => (
+              <li key={index} className="text-gray-700">{benefit}</li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {/* Salary */}
+      <div className="bg-white rounded-xl border p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-xl font-medium">Salary</h3>
+          {editingField === 'salary' ? (
+            <div className="space-x-2">
+              <button onClick={() => handleCancel('salary')} className="text-red-600 hover:text-red-700 text-sm">Cancel</button>
+              <button onClick={() => handleSave('salary')} className="text-green-600 hover:text-green-700 text-sm font-medium">Save</button>
+            </div>
+          ) : (
+            <button onClick={() => handleEditClick('salary')} className="text-blue-600 hover:text-blue-700 text-sm">Edit</button>
+          )}
         </div>
-      ) : (
-        <div className="flex flex-wrap gap-2">
-          {editedData.keywords?.map((skill, index) => (
-            <span key={index} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-              {skill}
-            </span>
-          ))}
-        </div>
-      )}
+        {editingField === 'salary' ? (
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm text-gray-600">Minimum Salary</label>
+              <input
+                type="number"
+                className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500"
+                value={editedData.salary?.min || 0}
+                onChange={(e) => handleInputChange('salary.min', parseInt(e.target.value) || 0)}
+              />
+            </div>
+            <div>
+              <label className="text-sm text-gray-600">Maximum Salary</label>
+              <input
+                type="number"
+                className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500"
+                value={editedData.salary?.max || 0}
+                onChange={(e) => handleInputChange('salary.max', parseInt(e.target.value) || 0)}
+              />
+            </div>
+            <div>
+              <label className="text-sm text-gray-600">Currency</label>
+              <select
+                className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500"
+                value={editedData.salary?.currency || 'VND'}
+                onChange={(e) => handleInputChange('salary.currency', e.target.value)}
+              >
+                <option value="VND">VND</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-sm text-gray-600">Period</label>
+              <select
+                className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500"
+                value={editedData.salary?.period || 'Monthly'}
+                onChange={(e) => handleInputChange('salary.period', e.target.value)}
+              >
+                <option value="Monthly">Monthly</option>
+                <option value="Yearly">Yearly</option>
+              </select>
+            </div>
+          </div>
+        ) : (
+          <div>
+            {editedData.salary?.min === 0 && editedData.salary?.max === 0 ? (
+              <p className="text-gray-700">Negotiable</p>
+            ) : (
+              <p className="text-gray-700">
+                {editedData.salary?.min?.toLocaleString()} 
+                {editedData.salary?.max > 0 && ` - ${editedData.salary?.max?.toLocaleString()}`} 
+                {editedData.salary?.currency} per {editedData.salary?.period}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 
   const renderAdditionalInformation = () => (
-    <div className="bg-white rounded-lg border p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-xl font-semibold text-gray-800">Additional Information</h3>
+    <div className="bg-white rounded-xl border p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-xl font-medium">Additional Information</h3>
         {editingField === 'additional' ? (
           <div className="space-x-2">
             <button onClick={() => handleCancel('additional')} className="text-red-600 hover:text-red-700 text-sm">Cancel</button>
@@ -790,13 +922,28 @@ const JobDescriptionScanningPreview = ({ isOpen, onComplete, data }) => {
         <div className="space-y-4">
           <div>
             <label className="text-sm text-gray-600">Application Deadline</label>
-            <input
-              type="text"
-              className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500"
-              value={editedData.applicationDeadline || ''}
-              onChange={(e) => handleInputChange('applicationDeadline', e.target.value)}
-              placeholder="DD/MM/YYYY"
-            />
+            <div className="mt-1">
+              <DatePicker
+                selected={editedData.applicationDeadline ? new Date(editedData.applicationDeadline) : null}
+                onChange={(date) => {
+                  // Ensure we're working with a valid date and convert to ISO format with time
+                  const validDate = date instanceof Date && !isNaN(date) ? date : null;
+                  if (validDate) {
+                    // Set time to end of day (23:59:59.999) for the deadline
+                    validDate.setHours(23, 59, 59, 999);
+                  }
+                  handleInputChange('applicationDeadline', validDate ? validDate.toISOString() : null);
+                }}
+                className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500"
+                placeholderText="Select a deadline"
+                isClearable
+                dateFormat="dd/MM/yyyy"
+                minDate={new Date()}
+                showMonthDropdown
+                showYearDropdown
+                dropdownMode="select"
+              />
+            </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -830,26 +977,59 @@ const JobDescriptionScanningPreview = ({ isOpen, onComplete, data }) => {
         </div>
       ) : (
         <div className="space-y-4">
-          {editedData.applicationDeadline && (
-            <div>
-              <label className="text-sm text-gray-600 block">Application Deadline</label>
-              <p className="font-medium">{editedData.applicationDeadline}</p>
-            </div>
-          )}
+          {/* Only show Application Deadline if it exists and is valid */}
+          {(() => {
+            try {
+              if (!editedData.applicationDeadline) return null;
+              const date = new Date(editedData.applicationDeadline);
+              if (!(date instanceof Date) || isNaN(date)) return null;
+              return (
+                <div>
+                  <label className="text-sm text-gray-600 block">Application Deadline</label>
+                  <p className="font-medium">
+                    {date.toLocaleDateString('en-GB', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric'
+                    })}
+                  </p>
+                </div>
+              );
+            } catch (error) {
+              return null;
+            }
+          })()}
+
+          {/* Only show Contact Info section if any contact field exists */}
           {editedData.contactInfo && (
+            editedData.contactInfo.name || 
+            editedData.contactInfo.email || 
+            editedData.contactInfo.phone
+          ) && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm text-gray-600 block">Contact Person</label>
-                <p className="font-medium">{editedData.contactInfo.name}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-600 block">Email</label>
-                <p className="font-medium">{editedData.contactInfo.email}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-600 block">Phone</label>
-                <p className="font-medium">{editedData.contactInfo.phone}</p>
-              </div>
+              {/* Only show name if it exists */}
+              {editedData.contactInfo.name && (
+                <div>
+                  <label className="text-sm text-gray-600 block">Contact Person</label>
+                  <p className="font-medium">{editedData.contactInfo.name}</p>
+                </div>
+              )}
+              
+              {/* Only show email if it exists */}
+              {editedData.contactInfo.email && (
+                <div>
+                  <label className="text-sm text-gray-600 block">Email</label>
+                  <p className="font-medium">{editedData.contactInfo.email}</p>
+                </div>
+              )}
+              
+              {/* Only show phone if it exists */}
+              {editedData.contactInfo.phone && (
+                <div>
+                  <label className="text-sm text-gray-600 block">Phone</label>
+                  <p className="font-medium">{editedData.contactInfo.phone}</p>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -861,12 +1041,13 @@ const JobDescriptionScanningPreview = ({ isOpen, onComplete, data }) => {
     if (!editedData) return null;
 
     return (
-      <>
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-semibold text-gray-800">Review Job Description</h2>
+      <div className="flex flex-col h-full">
+        {/* Fixed Header */}
+        <div className="flex justify-between items-center px-8 py-6 border-b">
+          <h2 className="text-2xl font-semibold">Review Job Description</h2>
           <button
             onClick={() => setShowPreview(false)}
-            className="text-gray-500 hover:text-red-700"
+            className="text-gray-500 hover:text-red-700 p-2"
           >
             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -874,7 +1055,9 @@ const JobDescriptionScanningPreview = ({ isOpen, onComplete, data }) => {
           </button>
         </div>
 
-        <div className="space-y-6">
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto px-8 py-6">
+          <div className="space-y-8">
           {renderBasicInformation()}
           {renderJobDetails()}
           {renderSkillsAndBenefits()}
@@ -883,22 +1066,25 @@ const JobDescriptionScanningPreview = ({ isOpen, onComplete, data }) => {
         </div>
 
         {saveError && (
-          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
             <p className="text-red-600">{saveError}</p>
           </div>
         )}
+        </div>
 
-        <div className="mt-6 flex justify-end space-x-4">
+        {/* Fixed Footer */}
+        <div className="border-t px-8 py-6 bg-white">
+          <div className="flex justify-end space-x-4">
           <button
             onClick={() => setShowPreview(false)}
-            className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+              className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium"
             disabled={isSaving}
           >
             Back to Scanning
           </button>
           <button
             onClick={handleConfirm}
-            className={`px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center ${
+              className={`px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium flex items-center ${
               isSaving ? 'opacity-75 cursor-not-allowed' : ''
             }`}
             disabled={isSaving}
@@ -916,7 +1102,8 @@ const JobDescriptionScanningPreview = ({ isOpen, onComplete, data }) => {
             )}
           </button>
         </div>
-      </>
+        </div>
+      </div>
     );
   };
 
@@ -924,10 +1111,10 @@ const JobDescriptionScanningPreview = ({ isOpen, onComplete, data }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl p-6 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-5xl h-[92vh] flex flex-col">
         {!showPreview ? (
           // Scanning UI
-          <>
+          <div className="p-8">
             <h2 className="text-xl font-semibold mb-4">Processing Job Description</h2>
             <div className="h-2 w-full bg-gray-100 rounded-full mb-4">
               <div
@@ -980,7 +1167,7 @@ const JobDescriptionScanningPreview = ({ isOpen, onComplete, data }) => {
             <div className="mt-6 text-center text-sm text-gray-500">
               Please wait while we analyze and extract information from the job description
             </div>
-          </>
+          </div>
         ) : (
           renderPreview()
         )}

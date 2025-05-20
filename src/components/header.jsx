@@ -2,12 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import logoImage from '../assets/icons/easy-builder.png';
 
+// Helper function to check if user is admin
+const isAdminUser = (userData, storedRole, storedUserRole) => {
+  // Get role from userData object if it exists
+  const userDataRole = userData && userData.role ? userData.role : null;
+  
+  // Try all possible sources of role information
+  const effectiveRole = storedUserRole || storedRole || userDataRole;
+  
+  // Return true only if role is exactly 'admin'
+  return effectiveRole === 'admin';
+};
+
 const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [userName, setUserName] = useState('');
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -18,13 +31,28 @@ const Header = () => {
   const checkLoginStatus = () => {
     const token = localStorage.getItem('token');
     const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const userRole = localStorage.getItem('userRole');
+    const role = localStorage.getItem('role');
     
     if (token) {
       setIsLoggedIn(true);
       setUserName(userData.name || 'User');
+      
+      // Use the helper function for more robust admin check
+      const adminStatus = isAdminUser(userData, role, userRole);
+      setIsAdmin(adminStatus);
+      
+      // Debug the role determination
+      console.log('Role check:', { 
+        userRole, 
+        role, 
+        userDataRole: userData.role, 
+        isAdmin: adminStatus
+      });
     } else {
       setIsLoggedIn(false);
       setUserName('');
+      setIsAdmin(false);
     }
   };
 
@@ -58,8 +86,12 @@ const Header = () => {
     // Xóa dữ liệu đăng nhập
     localStorage.removeItem('token');
     localStorage.removeItem('role');
+    localStorage.removeItem('userRole');
     localStorage.removeItem('userData');
+    
+    // Explicitly set state
     setIsLoggedIn(false);
+    setIsAdmin(false);
     
     // Đợi một chút để các animation kết thúc và components có thể dừng
     setTimeout(() => {
@@ -95,15 +127,22 @@ const Header = () => {
     checkLoginStatus();
     window.addEventListener('scroll', handleScroll);
     
+    // Add storage event listener to detect changes to localStorage
+    window.addEventListener('storage', checkLoginStatus);
+    
     return () => {
       window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('storage', checkLoginStatus);
       setIsNavigating(false);
     };
   }, []);
 
+  // Re-check login status whenever location changes
   useEffect(() => {
     // Reset navigation state after route change
     setIsNavigating(false);
+    // Re-check login status
+    checkLoginStatus();
   }, [location]);
 
   // Thêm điều kiện kiểm tra đường dẫn để ẩn header
@@ -128,22 +167,13 @@ const Header = () => {
             </button>
             
             <nav className="hidden lg:flex items-center space-x-6">
+              <button onClick={() => handleNavigation('/templates')} className="hover:text-gray-800">
+                Template
+              </button>
               <button onClick={() => handleNavigation('/dashboard')} className="flex items-center hover:text-gray-800">
                 Dashboard
               </button>
-              {/* <button onClick={() => handleNavigation('/convert')} className="hover:text-gray-800">
-                Convert CV
-              </button>
-              <button onClick={() => handleNavigation('/reviewcv')} className="hover:text-gray-800">
-                CV Review
-              </button>
-              <button onClick={() => handleNavigation('/emaileditor')} className="flex items-center hover:text-gray-800">
-                Cover Letter
-              </button>
-              <button onClick={() => handleNavigation('/enhancemail')} className="flex items-center hover:text-gray-800">
-                Enhance Letter
-              </button> */}
-
+                        
               <div className="w-px h-6 bg-gray-300 mx-2"></div>
               {isLoggedIn ? (
                 <div className="relative">
@@ -171,6 +201,14 @@ const Header = () => {
                       >
                         Profile
                       </button>
+                      {isAdmin && (
+                        <button 
+                          onClick={() => handleNavigation('/admin')}
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          Admin
+                        </button>
+                      )}
                       <button
                         onClick={handleLogout}
                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -244,6 +282,11 @@ const Header = () => {
                   <button onClick={() => handleNavigation('/profile')} className="block w-full text-left text-gray-600 hover:text-gray-800 py-2">
                     Profile
                   </button>
+                  {isAdmin && (
+                    <button onClick={() => handleNavigation('/admin')} className="block w-full text-left text-gray-600 hover:text-gray-800 py-2">
+                      Admin
+                    </button>
+                  )}
                   <button
                     onClick={handleLogout}
                     className="block w-full text-left bg-blue-500 text-white font-semibold px-4 py-2 rounded-md hover:bg-blue-600 transition duration-300 mt-2"

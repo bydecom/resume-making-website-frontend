@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState } from 'react';
 const SidebarContext = createContext({
   isOpen: true,
   setIsOpen: () => {},
+  transitionDuration: '300ms'
 });
 
 export const SidebarProvider = ({ children, defaultOpen = true }) => {
@@ -16,26 +17,43 @@ export const SidebarProvider = ({ children, defaultOpen = true }) => {
   );
 };
 
-export const Sidebar = ({ children, className = '' }) => {
+export const useSidebar = () => {
+  const context = useContext(SidebarContext);
+  if (context === undefined) {
+    throw new Error('useSidebar must be used within a SidebarProvider');
+  }
+  return context;
+};
+
+export const Sidebar = ({ children, className = '', transitionDuration = '300ms' }) => {
   const { isOpen } = useContext(SidebarContext);
 
   return (
     <aside
-      className={`border-r border-gray-200 transition-all duration-300 ${
-        isOpen ? 'w-64' : 'w-16'
-      } ${className}`}
+      className={`overflow-hidden ${className}`}
+      style={{ 
+        width: isOpen ? '16rem' : '0',  // 16rem = 64px, 0 to completely hide
+        opacity: isOpen ? '1' : '0',
+        transition: `width ${transitionDuration} ease-in-out, opacity ${transitionDuration} ease-in-out`
+      }}
     >
-      <div className="h-full flex flex-col">{children}</div>
+      <div className="h-full flex flex-col w-64">{children}</div>
     </aside>
   );
 };
 
 export const SidebarHeader = ({ children, className = '' }) => {
+  const { isOpen } = useContext(SidebarContext);
+  
+  if (!isOpen) {
+    return null; // Don't render header when sidebar is collapsed
+  }
+  
   return <div className={`${className}`}>{children}</div>;
 };
 
 export const SidebarContent = ({ children, className = '' }) => {
-  return <div className={`flex-1 overflow-y-auto ${className}`}>{children}</div>;
+  return <div className={`flex-1 overflow-y-auto overflow-x-hidden ${className}`}>{children}</div>;
 };
 
 export const SidebarMenu = ({ children, className = '' }) => {
@@ -67,7 +85,19 @@ export const SidebarMenuButton = React.forwardRef(
         onClick={onClick}
         {...props}
       >
-        {children}
+        {isOpen ? (
+          children
+        ) : (
+          // When sidebar is collapsed, only show icons
+          React.Children.map(children, child => {
+            if (React.isValidElement(child) && 
+                (child.type === 'span' || 
+                 (typeof child.type === 'object' && child.type.displayName === 'ChevronDown'))) {
+              return null;
+            }
+            return child;
+          })
+        )}
       </button>
     );
   }
@@ -76,6 +106,12 @@ export const SidebarMenuButton = React.forwardRef(
 SidebarMenuButton.displayName = 'SidebarMenuButton';
 
 export const SidebarMenuSub = ({ children, className = '' }) => {
+  const { isOpen } = useContext(SidebarContext);
+  
+  if (!isOpen) {
+    return null; // Don't show submenu when sidebar is collapsed
+  }
+  
   return <ul className={`pl-6 mt-1 ${className}`}>{children}</ul>;
 };
 
@@ -109,3 +145,6 @@ export const SidebarMenuSubButton = React.forwardRef(
 );
 
 SidebarMenuSubButton.displayName = 'SidebarMenuSubButton'; 
+
+// Export the context for direct use
+export { SidebarContext }; 

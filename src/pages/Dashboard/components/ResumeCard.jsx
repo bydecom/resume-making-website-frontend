@@ -2,7 +2,7 @@ import React from "react";
 import { MoreVertical, FileText, Edit, Eye, Download, Trash2 } from "lucide-react";
 import ReusableCVHeader from '../../../components/ReusableCVHeader';
 
-const ResumeCard = ({ resume, openPreview, toggleMenu, activeMenuId, onEdit, onDelete }) => {
+const ResumeCard = ({ resume, openPreview, toggleMenu, activeMenuId, onEdit, onDelete, onDownload }) => {
   // Convert bg-blue-500 to blue for icon color
   const getIconColor = (score) => {
     if (score >= 80) return "text-green-500";
@@ -68,7 +68,7 @@ const ResumeCard = ({ resume, openPreview, toggleMenu, activeMenuId, onEdit, onD
       <div className="p-5 flex items-start justify-between border-b border-gray-100">
         <div className="flex-1 min-w-0">
           {/* Title and Basic Info */}
-          <h3 className="font-semibold text-lg text-gray-800 truncate">
+          <h3 className="font-semibold text-lg text-gray-800 line-clamp-2">
             {resume.name || `Resume for ${resume.personalInfo?.firstName} ${resume.personalInfo?.lastName}` || 'Untitled Resume'}
           </h3>
           <p className="text-sm text-gray-500 mt-1 truncate">
@@ -140,6 +140,7 @@ const ResumeCard = ({ resume, openPreview, toggleMenu, activeMenuId, onEdit, onD
                 </button>
                 <button 
                   className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                  onClick={() => onDownload(resume)}
                 >
                   <Download className="h-4 w-4" />
                   Download
@@ -207,6 +208,7 @@ const ResumeCard = ({ resume, openPreview, toggleMenu, activeMenuId, onEdit, onD
           <button 
             className="p-2 rounded hover:bg-gray-200 transition-colors" 
             title="Download"
+            onClick={() => onDownload(resume)}
           >
             <Download className="h-4 w-4 text-gray-600" />
           </button>

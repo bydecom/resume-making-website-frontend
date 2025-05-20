@@ -24,11 +24,16 @@ const ProjectsStep = ({ data = [], updateData, nextStep, prevStep, hideTitle = f
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    const newValue = type === 'checkbox' ? checked : value;
+    let finalValue = value;
+    
+    // Trim whitespace for URL field
+    if (name === 'url') {
+      finalValue = value.trim();
+    }
     
     const updatedProject = {
       ...currentProject,
-      [name]: newValue
+      [name]: finalValue
     };
     setCurrentProject(updatedProject);
     

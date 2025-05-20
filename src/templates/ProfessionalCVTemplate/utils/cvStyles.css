@@ -1,0 +1,107 @@
+/* CV styles to ensure proper word wrapping */
+.cv-wrapper, .cv-section, .cv-content {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: keep-all;
+  white-space: normal;
+  hyphens: none !important;
+  text-wrap: pretty;
+  font-size: 0.9rem !important; /* Explicitly set font size */
+}
+
+
+
+
+/* Force text to never hyphenate and break only at word boundaries */
+* {
+  hyphens: none !important;
+  -webkit-hyphens: none !important;
+  -ms-hyphens: none !important;
+  -moz-hyphens: none !important;
+  text-wrap: pretty !important;
+}
+
+/* Special override for list items to ensure proper bullets and wrapping */
+ul.cv-list {
+  overflow: hidden;
+  list-style-position: outside;
+  padding-left: 20px;
+}
+
+ul.cv-list li {
+  display: list-item;
+  margin-bottom: 4px;
+  word-break: keep-all !important;
+  text-wrap: pretty !important;
+  line-height: 1.3;
+  vertical-align: top;
+}
+
+/* Better alignment for list items with their bullets */
+ul.cv-list li::marker {
+  vertical-align: middle;
+  position: relative;
+  top: -0.1em;
+}
+
+/* Experience section styles - Table-like structure for better PDF compatibility */
+.experience-container {
+  width: 100%;
+  position: relative;
+  margin-bottom: 12px;
+}
+
+/* Table-like layout for better PDF rendering */
+.experience-table {
+  display: table;
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+
+.experience-row {
+  display: table-row;
+}
+
+.experience-company-cell {
+  display: table-cell;
+  width: 65%;
+  vertical-align: top;
+  padding-right: 10px;
+}
+
+.experience-date-cell {
+  display: table-cell;
+  width: 35%;
+  text-align: right;
+  vertical-align: top;
+}
+
+/* For PDF export specifically */
+.exporting-pdf .experience-company-cell,
+.exporting-pdf .experience-date-cell {
+  position: static !important;
+  float: none !important;
+}
+
+/* Job divider line */
+.job-divider {
+  height: 1px;
+  width: 95%;
+  background-color: #E0E0E0;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+/* Skill item alignment */
+.skill-item {
+  display: flex;
+  align-items: center;
+}
+
+.skill-item .dot {
+  flex-shrink: 0;
+  margin-top: 0;
+  vertical-align: text-top;
+} 

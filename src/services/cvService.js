@@ -16,6 +16,20 @@ const cvService = {
   },
 
   /**
+   * Tạo CV tạm thời (đã đánh dấu is_deleted=true)
+   * @param {Object} cvData - Dữ liệu CV tạm thời
+   * @returns {Promise} - Promise kết quả từ API
+   */
+  createTempCV: async (cvData) => {
+    try {
+      const response = await api.post('/api/cv/temp', cvData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
    * Cập nhật CV hiện có
    * @param {string} cvId - ID của CV cần cập nhật
    * @param {Object} cvData - Dữ liệu CV cập nhật

@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiEdit } from 'react-icons/fi';
 
-const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
+const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData, updateData }) => {
   const navigate = useNavigate();
   const [isGenerating, setIsGenerating] = useState(false);
   const [editingField, setEditingField] = useState(null);
@@ -49,33 +49,37 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
   };
 
   // Hàm xử lý khi input thay đổi
-  const handleInputChange = (fieldPath, value) => {
-    // Tách đường dẫn trường, vd: "personalInfo.firstName"
-    const pathParts = fieldPath.split('.');
+  const handleInputChange = (field, value) => {
+    let finalValue = value;
     
-    // Clone dữ liệu hiện tại
-    const newData = {...localFormData};
-    
-    // Đi đến đúng vị trí trong dữ liệu và cập nhật giá trị
-    let current = newData;
-    for (let i = 0; i < pathParts.length - 1; i++) {
-      if (!current[pathParts[i]]) {
-        current[pathParts[i]] = {};
-      }
-      current = current[pathParts[i]];
+    // Trim whitespace for URL fields
+    if (field === 'personalInfo.website' || 
+        field === 'projects.url' || 
+        field === 'certifications.credentialURL') {
+      finalValue = value.trim();
     }
-    current[pathParts[pathParts.length - 1]] = value;
     
-    // Cập nhật state local
+    const newData = { ...localFormData };
+    const fieldPath = field.split('.');
+    
+    let current = newData;
+    for (let i = 0; i < fieldPath.length - 1; i++) {
+      if (!(fieldPath[i] in current)) {
+        current[fieldPath[i]] = {};
+      }
+      current = current[fieldPath[i]];
+    }
+    current[fieldPath[fieldPath.length - 1]] = finalValue;
+    
     setLocalFormData(newData);
     
-    // Cập nhật state form data ở component cha
-    if (pathParts.length === 1) {
-      // Nếu là trường dữ liệu ở cấp cao nhất (summary, skills,...)
-      updateFormData(pathParts[0], newData[pathParts[0]]);
-    } else if (pathParts.length > 1) {
-      // Nếu là trường dữ liệu con (personalInfo.firstName,...)
-      updateFormData(pathParts[0], newData[pathParts[0]]);
+    // Use updateFormData instead of updateData
+    if (fieldPath.length === 1) {
+      // If it's a top-level field (summary, skills,...)
+      updateFormData(fieldPath[0], newData[fieldPath[0]]);
+    } else if (fieldPath.length > 1) {
+      // If it's a nested field (personalInfo.firstName,...)
+      updateFormData(fieldPath[0], newData[fieldPath[0]]);
     }
   };
 

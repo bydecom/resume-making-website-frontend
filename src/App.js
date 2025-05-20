@@ -2,6 +2,9 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Header from './components/header';
 import Footer from './components/Footer';
+import GlobalAIAssistant from './components/AIAssistant/GlobalAIAssistant';
+import ScrollToTopButton from './components/ScrollToTop';
+import ScrollDownButton from './components/ScrollDownButton';
 import './App.css';
 
 // Import page components
@@ -19,7 +22,7 @@ import AdminRegister from './pages/AdminRegister';
 import NotFound from './pages/NotFound';
 import Unauthorized from './pages/Unauthorized';
 import NewCV from './pages/NewCV';
-import EditCV from './pages/EditCV';
+import EditResume from './pages/EditResume';
 import NewResume from './pages/NewResume';
 // Import Admin sub-pages
 import AdminDashboard from './pages/Admin/Dashboard';
@@ -30,7 +33,27 @@ import AdminTemplates from './pages/Admin/Templates';
 import UIManagement from './pages/Admin/UIManagement';
 import Prompts from './pages/Admin/Prompts';
 import AdminPage from './pages/Admin';
-
+import ExportPDF from './test/exportPDF';
+import Logs from './pages/Admin/Logs';
+import UserLogs from './pages/Admin/UserLogs';
+import AIConfig from './pages/Admin/AIConfig';
+// Import FooterPages
+import AboutUs from './pages/FooterPages/AboutUs';
+import Contact from './pages/FooterPages/Contact';
+import TermsOfService from './pages/FooterPages/TermsOfService';
+import PrivacyPolicy from './pages/FooterPages/PrivacyPolicy';
+import FAQ from './pages/FooterPages/FAQ';
+import AIResumeWriter from './pages/FooterPages/AIResumeWriter';
+import ResumeChecker from './pages/FooterPages/ResumeChecker';
+import JobMatching from './pages/FooterPages/JobMatching';
+import CareerBlog from './pages/FooterPages/CareerBlog';
+import BlogPost from './pages/FooterPages/CareerBlog/BlogPost';
+import CoverLetterBuilder from './pages/FooterPages/CoverLetterBuilder';
+import CoverLetterExamples from './pages/FooterPages/CoverLetterExamples';
+import ResumeExamples from './pages/FooterPages/ResumeExamples';
+import HelpCenter from './pages/FooterPages/HelpCenter';
+import Reviews from './pages/FooterPages/Reviews';
+import Pricing from './pages/FooterPages/Pricing';
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRole }) => {
   const token = localStorage.getItem('token');
@@ -89,19 +112,46 @@ const Layout = ({ children }) => {
     '/admin-register', 
     '/unauthorized',
     '/new-cv',
-    '/new-resume'
+    '/new-resume',
+    '/resume/create-new'
   ];
   
   // Check if the current path is an admin route or edit-cv route
   const isAdminRoute = location.pathname.startsWith('/admin');
   const isEditCVRoute = location.pathname.startsWith('/edit-cv');
+  const isEditResumeRoute = location.pathname.startsWith('/edit-resume');
   
-  const shouldShowHeaderFooter = !noHeaderFooterRoutes.includes(location.pathname) && !isAdminRoute && !isEditCVRoute;
+  // Check if the current path is a specific edit-resume route with an ID
+  const isEditResumeWithId = /^\/edit-resume\/[a-zA-Z0-9]+$/.test(location.pathname);
+  
+  // Add check for resume/create-new route
+  const isCreateNewResume = location.pathname === '/resume/create-new';
+  
+  const shouldShowHeaderFooter = !noHeaderFooterRoutes.includes(location.pathname) && !isAdminRoute && !isEditCVRoute && !isEditResumeRoute;
   
   if (!shouldShowHeaderFooter) {
     // Return children directly without header/footer for login, register, admin pages, etc.
-    return children;
+    const noScrollDownButtonRoutes = ['/templates', '/unauthorized', '/new-cv', '/new-resume', '/edit-resume', '/resume/create-new'];
+    const shouldShowScrollDownButton = !noScrollDownButtonRoutes.includes(location.pathname) && !isEditCVRoute && !isEditResumeRoute;
+    
+    return (
+      <>
+        {children}
+        {!isEditResumeWithId && !isCreateNewResume && <GlobalAIAssistant />}
+        {shouldShowScrollDownButton && <ScrollDownButton />}
+      </>
+    );
   }
+
+  const noScrollDownButtonRoutes = [
+    '/templates',
+    '/unauthorized',
+    '/new-cv',
+    '/new-resume',
+    '/edit-resume',
+    '/resume/create-new'
+  ];
+  const shouldShowScrollDownButton = !noScrollDownButtonRoutes.includes(location.pathname) && !isEditCVRoute && !isEditResumeRoute;
   
   return (
     <>
@@ -110,6 +160,9 @@ const Layout = ({ children }) => {
         {children}
       </main>
       <Footer />
+      {!isEditResumeWithId && !isCreateNewResume && <GlobalAIAssistant />}
+      <ScrollToTopButton />
+      {shouldShowScrollDownButton && <ScrollDownButton />}
     </>
   );
 };
@@ -132,7 +185,23 @@ const AppRoutes = () => {
         <Route path="/home" element={<Home />} />
         <Route path="/about" element={<About />} />
         <Route path="/profile" element={<Profile />} />
-
+        {/* {FooterPages} */}
+        <Route path="/about-us" element={<AboutUs />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/terms-of-service" element={<TermsOfService />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/faq" element={<FAQ />} />
+        <Route path="/help-center" element={<HelpCenter />} />
+        <Route path="/reviews" element={<Reviews />} />
+        <Route path="/pricing" element={<Pricing />} />
+        <Route path="/career-blog" element={<CareerBlog />} />
+        <Route path="/blog/:slug" element={<BlogPost />} />
+        <Route path="/resume-checker" element={<ResumeChecker />} />
+        <Route path="/job-matching" element={<JobMatching />} />
+        <Route path="/cover-letter-builder" element={<CoverLetterBuilder />} />
+        <Route path="/cover-letter-examples" element={<CoverLetterExamples />} />
+        <Route path="/resume-examples" element={<ResumeExamples />} />
+        <Route path="/ai-resume-writer" element={<AIResumeWriter />} />
         
         {/* Protected Routes */}
         <Route 
@@ -143,7 +212,10 @@ const AppRoutes = () => {
             </ProtectedRoute>
           } 
         />
-        
+        <Route
+          path="/test"
+          element={<ExportPDF />}
+        />
         <Route 
           path="/convert" 
           element={
@@ -180,7 +252,7 @@ const AppRoutes = () => {
           path="/edit-cv/:cvId" 
           element={
             <ProtectedRoute>
-              <EditCV />
+              <NewCV />
             </ProtectedRoute>
           } 
         />
@@ -192,6 +264,35 @@ const AppRoutes = () => {
             </ProtectedRoute>
           } 
         />
+        <Route 
+          path="/resume/create-new" 
+          element={
+            <ProtectedRoute>
+              <EditResume />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/edit-resume" 
+          element={
+            <ProtectedRoute>
+              <EditResume />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/edit-resume/:resumeId" 
+          element={
+            <ProtectedRoute>
+              <EditResume />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/ai-resume-writer" 
+          element={<AIResumeWriter />}
+        />
+
         {/* Admin Routes */}
         <Route 
           path="/admin" 
@@ -208,6 +309,9 @@ const AppRoutes = () => {
           <Route path="templates" element={<AdminTemplates />} />
           <Route path="ui" element={<UIManagement />} />
           <Route path="prompts" element={<Prompts />} />
+          <Route path="ai-config" element={<AIConfig />} />
+          <Route path="logs" element={<Logs />} />
+          <Route path="user-logs" element={<UserLogs />} />
         </Route>
         
         {/* 404 Route */}

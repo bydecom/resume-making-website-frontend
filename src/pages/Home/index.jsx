@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { motion, useAnimation } from 'framer-motion';
 import HeroSection from './components/HeroSection';
 import ReviewsSection from './components/ReviewsSection';
 import FeaturesSection from './components/FeaturesSection';
 import CTASection from './components/CTASection';
 import MetricSection from './components/MetricSection';
-import ScrollToTop from './components/ScrollToTop';
+import ScrollToTop from '../../components/ScrollToTop';
 import ProblemStatementSection from './components/ProblemStatementSection';
 import SolutionSection from './components/SolutionSection';
 import EducationSection from './components/EducationSection';
@@ -24,21 +24,16 @@ const sectionVariants = {
 };
 
 const Home = () => {
-  const [isMounted, setIsMounted] = useState(false);
+  const isMounted = useRef(false);
   const controls = useAnimation();
 
   // Handle component mount and cleanup
   useEffect(() => {
-    setIsMounted(true);
+    isMounted.current = true;
     window.scrollTo(0, 0);
     
-    // Tạo một biến kiểm tra mount state cho component này
-    const mountedRef = { current: true };
-
     return () => {
-      // Đánh dấu component đã unmount
-      mountedRef.current = false;
-      setIsMounted(false);
+      isMounted.current = false;
       controls.stop();
     };
   }, [controls]);
@@ -46,16 +41,11 @@ const Home = () => {
   // Tạo một function an toàn để chạy animation
   const safeAnimate = async (animation) => {
     // Kiểm tra nếu component vẫn mounted và window.isUnmounting không true
-    if (isMounted && !window.isUnmounting) {
+    if (isMounted.current && !window.isUnmounting) {
       return controls.start(animation);
     }
     return Promise.resolve();
   };
-
-  // Chỉ render animations nếu component được mount
-  if (!isMounted) {
-    return null;
-  }
 
   return (
     <div>

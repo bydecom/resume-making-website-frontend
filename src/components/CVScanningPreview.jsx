@@ -188,6 +188,22 @@ const CVScanningPreview = ({ isOpen, onComplete = () => {}, data = {}, documentT
     processCV();
   }, [isOpen, documentText]);
   
+  // Thêm useEffect để kiểm soát scroll của trang khi modal đang mở
+  useEffect(() => {
+    if (isOpen) {
+      // Lưu lại kiểu overflow ban đầu
+      const originalStyle = window.getComputedStyle(document.body).overflow;
+      
+      // Ẩn thanh scroll và ngăn cuộn trang
+      document.body.style.overflow = 'hidden';
+      
+      // Cleanup khi component unmount hoặc khi modal đóng
+      return () => {
+        document.body.style.overflow = originalStyle;
+      };
+    }
+  }, [isOpen]);
+  
   // Hàm quét qua tất cả các phần
   const scanAllSections = async (data) => {
     // 1. Basic Information
@@ -578,7 +594,7 @@ const CVScanningPreview = ({ isOpen, onComplete = () => {}, data = {}, documentT
   // Render UI
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-      <div className="bg-white shadow-lg rounded-lg w-full max-w-6xl h-[80vh] flex flex-col overflow-hidden">
+      <div className="bg-white shadow-lg rounded-lg w-full max-w-[90%] max-h-full h-full flex flex-col overflow-hidden">
         {/* Header */}
         <div className="border-b border-gray-200 p-4 flex justify-between items-center">
           <h2 className="text-xl font-bold text-gray-900">CV Processing</h2>

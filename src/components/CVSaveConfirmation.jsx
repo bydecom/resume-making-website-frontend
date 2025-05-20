@@ -1,10 +1,21 @@
 import React from 'react';
 import { X } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import CVPreview from '../pages/NewCV/components/CVPreview';
 import CVAssessment from './CVAssessment';
 
 // Hàm tạo đánh giá CV dựa trên dữ liệu CV
 const generateCVAssessment = (cvData) => {
+  // Handle null or undefined data
+  if (!cvData) {
+    return {
+      score: 0,
+      strengths: ["No data available for assessment."],
+      improvements: ["Please complete your profile information."],
+      tips: ["Fill in your personal details to get started."],
+    };
+  }
+
   const assessment = {
     score: 0,
     strengths: [],
@@ -16,12 +27,18 @@ const generateCVAssessment = (cvData) => {
   let totalScore = 0;
   let totalFactors = 0;
 
+  // Safely check for personalInfo
+  const personalInfo = cvData.personalInfo || {};
+  
   // Kiểm tra thông tin cá nhân
-  const personalInfoFields = Object.keys(cvData.personalInfo || {}).filter(key => 
+  const personalInfoFields = Object.keys(personalInfo).filter(key => 
     ['firstName', 'lastName', 'professionalHeadline', 'email', 'phone', 'location', 'country'].includes(key)
   );
-  const personalInfoScore =
-    personalInfoFields.filter(key => cvData.personalInfo[key]).length / personalInfoFields.length;
+  
+  const filledFields = personalInfoFields.filter(key => personalInfo[key]);
+  const personalInfoScore = personalInfoFields.length > 0 ? 
+    filledFields.length / personalInfoFields.length : 0;
+  
   totalScore += personalInfoScore;
   totalFactors++;
 
@@ -58,11 +75,12 @@ const generateCVAssessment = (cvData) => {
   }
   totalFactors++;
 
-  // Kiểm tra skills
-  if (cvData.skills && cvData.skills.length >= 5) {
+  // Kiểm tra skills - handle both array and string formats
+  const skills = Array.isArray(cvData.skills) ? cvData.skills : [];
+  if (skills.length >= 5) {
     totalScore += 1;
     assessment.strengths.push("You have a good range of skills listed.");
-  } else if (cvData.skills && cvData.skills.length > 0) {
+  } else if (skills.length > 0) {
     totalScore += 0.5;
     assessment.improvements.push("Consider adding more relevant skills to your profile.");
   } else {
@@ -80,7 +98,7 @@ const generateCVAssessment = (cvData) => {
   totalFactors++;
 
   // Tính điểm cuối cùng
-  assessment.score = Math.round((totalScore / totalFactors) * 100);
+  assessment.score = totalFactors > 0 ? Math.round((totalScore / totalFactors) * 100) : 0;
 
   // Thêm tips chung
   assessment.tips = [
@@ -106,6 +124,8 @@ const formatDate = (dateString) => {
 };
 
 const CVSaveConfirmation = ({ isOpen, onClose, onSave, cvData }) => {
+  const location = useLocation();
+  const isResume = location.pathname.includes('/resume/');
   const assessment = generateCVAssessment(cvData);
 
   if (!isOpen) return null;
@@ -114,7 +134,7 @@ const CVSaveConfirmation = ({ isOpen, onClose, onSave, cvData }) => {
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
       {/* Header */}
       <div className="px-6 py-4 border-b bg-white flex-shrink-0 flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Save Your CV</h2>
+        <h2 className="text-2xl font-bold">Save Your {isResume ? 'Resume' : 'CV'}</h2>
         <div className="flex items-center gap-4">
           <button 
             onClick={onClose}
@@ -129,7 +149,7 @@ const CVSaveConfirmation = ({ isOpen, onClose, onSave, cvData }) => {
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clipRule="evenodd"/>
             </svg>
-            Save CV
+            Save {isResume ? 'Resume' : 'CV'}
           </button>
         </div>
       </div>
@@ -142,7 +162,7 @@ const CVSaveConfirmation = ({ isOpen, onClose, onSave, cvData }) => {
             <CVAssessment assessment={assessment} />
           </div>
 
-          {/* Right Column - CV Preview */}
+          {/* Right Column - Preview */}
           <div className="flex-1 bg-gray-100 p-6 overflow-y-auto">
             <div className="max-w-[850px] mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
               <div className="cv-wrapper">

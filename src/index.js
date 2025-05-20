@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import { CVDataProvider } from './contexts/CVDataContext';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 // root.render(
@@ -11,7 +12,9 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 //   </React.StrictMode>
 // );
 root.render(
-  <App />
+  <CVDataProvider>
+    <App />
+  </CVDataProvider>
 );
 
 // If you want to start measuring performance in your app, pass a function

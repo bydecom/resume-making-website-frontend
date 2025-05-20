@@ -12,10 +12,10 @@ const Footer = () => {
             <div>
               <h3 className="mb-4 text-lg font-bold">Resume Builder</h3>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><Link to="#">About Us</Link></li>
-                <li><Link to="#">Contact</Link></li>
-                <li><Link to="#">Pricing</Link></li>
-                <li><Link to="#">Reviews</Link></li>
+                <li><Link to="/about-us">About Us</Link></li>
+                <li><Link to="/contact">Contact</Link></li>
+                <li><Link to="/pricing">Pricing</Link></li>
+                <li><Link to="/reviews">Reviews</Link></li>
               </ul>
             </div>
           </div>
@@ -25,10 +25,10 @@ const Footer = () => {
             <div>
               <h3 className="mb-4 text-lg font-bold">Resources</h3>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><Link to="#">Resume Examples</Link></li>
-                <li><Link to="#">Cover Letter Examples</Link></li>
-                <li><Link to="#">Career Blog</Link></li>
-                <li><Link to="#">Resume Templates</Link></li>
+                <li><Link to="/resume-examples">Resume Examples</Link></li>
+                <li><Link to="/cover-letter-examples">Cover Letter Examples</Link></li>
+                <li><Link to="/career-blog">Career Blog</Link></li>
+                <li><Link to="/templates">Resume Templates</Link></li>
               </ul>
             </div>
           </div>
@@ -38,10 +38,10 @@ const Footer = () => {
             <div>
               <h3 className="mb-4 text-lg font-bold">Support</h3>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><Link to="#">Help Center</Link></li>
-                <li><Link to="#">FAQ</Link></li>
-                <li><Link to="#">Privacy Policy</Link></li>
-                <li><Link to="#">Terms of Service</Link></li>
+                <li><Link to="/help-center">Help Center</Link></li>
+                <li><Link to="/faq">FAQ</Link></li>
+                <li><Link to="/privacy-policy">Privacy Policy</Link></li>
+                <li><Link to="/terms-of-service">Terms of Service</Link></li>
               </ul>
             </div>
           </div>
@@ -51,10 +51,10 @@ const Footer = () => {
             <div>
               <h3 className="mb-4 text-lg font-bold">Features</h3>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><Link to="#">AI Resume Writer</Link></li>
-                <li><Link to="#">Resume Checker</Link></li>
-                <li><Link to="#">Cover Letter Builder</Link></li>
-                <li><Link to="#">Job Matching</Link></li>
+                <li><Link to="/ai-resume-writer">AI Resume Writer</Link></li>
+                <li><Link to="/resume-checker">Resume Checker</Link></li>
+                <li><Link to="/cover-letter-builder">Cover Letter Builder</Link></li>
+                <li><Link to="/job-matching">Job Matching</Link></li>
               </ul>
             </div>
           </div>
