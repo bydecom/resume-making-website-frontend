@@ -1,6 +1,8 @@
 "use client"
 
 import React, { useState, useRef, useEffect } from "react"
+import { motion, useAnimationControls } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import {
   CheckCircle,
   FileText,
@@ -16,7 +18,8 @@ import {
   BarChart3,
   ClipboardList,
   Download,
-  X
+  X,
+  Edit
 } from "lucide-react"
 import { getTemplateById } from '../../templates'
 import JobDescriptionDetails from './JobDescriptionDetails'
@@ -108,6 +111,7 @@ const ResumeReview = ({ resumeData, jobData, onClose }) => {
   const [approvalStatus, setApprovalStatus] = useState("pending")
   const [showLeftPanel, setShowLeftPanel] = useState(true)
   const [showRightPanel, setShowRightPanel] = useState(true)
+  const navigate = useNavigate();
 
   // Get the actual resume data from the response structure
   const actualResumeData = resumeData?.data?.[0] || resumeData;
@@ -197,6 +201,10 @@ const ResumeReview = ({ resumeData, jobData, onClose }) => {
 
   const overallMatch = calculateOverallMatch()
 
+  const handleEdit = () => {
+    navigate(`/edit-resume/${actualResumeData?._id}`);
+  };
+
   return (
       <div className="flex flex-col h-screen bg-gray-50">
         {/* Backdrop with higher z-index */}
@@ -260,13 +268,11 @@ const ResumeReview = ({ resumeData, jobData, onClose }) => {
               {/* Right - Actions */}
               <div className="flex-1 flex items-center justify-end gap-2">
                 <button
-                  onClick={() => {
-                    // Add download logic
-                  }}
+                  onClick={handleEdit}
                   className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2"
                 >
-                  <Download className="h-5 w-5" />
-                  <span className="hidden sm:inline">Download</span>
+                  <Edit className="h-5 w-5" />
+                  <span className="hidden sm:inline">Edit</span>
                 </button>
                 <button
                   onClick={onClose}

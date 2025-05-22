@@ -348,11 +348,10 @@ const AdditionalInfoStep = ({ data, updateData, nextStep, prevStep, hideTitle = 
 
   return (
     <div className="space-y-6">
-      {!hideTitle && <h2 className="text-2xl font-bold mb-6">Additional Information</h2>}
 
-      <div className="bg-white rounded-lg shadow-md p-6">
+
+      <div className="bg-white rounded-lg p-6">
         <div className="flex justify-between items-center mb-5 pb-3 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-800">Additional Information</h2>
           {!hideTitle && (
             <button className="text-gray-400 hover:text-gray-600 text-xl" onClick={prevStep}>
               <FiX />
