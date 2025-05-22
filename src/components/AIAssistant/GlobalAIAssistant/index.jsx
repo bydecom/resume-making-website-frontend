@@ -136,7 +136,7 @@ const GlobalAIAssistant = () => {
     }
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (inputText.trim() === '') return;
     
     // Add user message
@@ -165,9 +165,9 @@ const GlobalAIAssistant = () => {
     // Simulate AI typing
     setIsTyping(true);
     
-    // Use taskMap for local processing (for demo purposes)
     try {
-      const result = processMessage(messageText, 'global');
+      // Process the message using taskMap
+      const result = await processMessage(messageText, 'global');
       
       // Handle any special actions returned
       if (result.actions && result.actions.length > 0) {
@@ -180,17 +180,17 @@ const GlobalAIAssistant = () => {
       // Set response message after a delay to simulate typing
       setTimeout(() => {
         setMessages([...newMessages, { 
-          text: result.response, 
+          text: result.output?.outputMessage || result.response || "I'm sorry, I couldn't process that request properly.", 
           isUser: false 
         }]);
         setIsTyping(false);
       }, 1000);
     } catch (error) {
-      console.error('Error in local processing:', error);
+      console.error('Error in message processing:', error);
       // Simple fallback for demo
       setTimeout(() => {
         setMessages([...newMessages, { 
-          text: "I'm sorry, I couldn't process that request properly.", 
+          text: "I'm sorry, I couldn't process that request properly. Please try again.", 
           isUser: false 
         }]);
         setIsTyping(false);

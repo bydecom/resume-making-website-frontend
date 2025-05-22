@@ -1,0 +1,70 @@
+Core Technologies:
+React (v19.0.0)
+Framework JavaScript chính cho frontend
+React DOM (v19.0.0) - Thư viện để render React trong môi trường web
+Node.js & npm
+Package manager và runtime environment
+UI/UX Libraries:
+Tailwind CSS (v3.3.0)
+Framework CSS utility-first
+Kèm theo PostCSS (v8.4.21) và Autoprefixer (v10.4.14)
+Framer Motion (v12.4.7)
+Thư viện animation cho React
+React Icons (v5.5.0)
+Thư viện icons cho React
+Font Awesome (v6.7.2)
+Thư viện icons phổ biến
+Lucide React (v0.476.0)
+Thư viện icons hiện đại
+PDF & Document Handling:
+@react-pdf/renderer (v4.3.0)
+Thư viện tạo PDF trong React
+jsPDF (v3.0.1)
+Thư viện tạo PDF từ JavaScript
+jsPDF-AutoTable (v5.0.2) - Plugin để tạo bảng trong PDF
+html2canvas (v1.4.1)
+Chuyển đổi HTML thành canvas
+html2pdf.js (v0.10.3)
+Chuyển đổi HTML thành PDF
+pdfjs-dist (v3.4.120)
+Thư viện xử lý PDF
+Mammoth (v1.9.0)
+Thư viện xử lý file Word (.docx)
+Data Visualization & Charts:
+Recharts (v2.15.3)
+Thư viện biểu đồ cho React
+Routing & Navigation:
+React Router DOM (v7.2.0)
+Thư viện routing cho React
+HTTP Client:
+Axios (v1.7.9)
+Thư viện HTTP client
+Date Handling:
+date-fns (v4.1.0)
+Thư viện xử lý ngày tháng
+React Datepicker (v8.3.0)
+Component date picker cho React
+Notifications & UI Feedback:
+React Hot Toast (v2.5.2)
+React Toastify (v11.0.5)
+Các thư viện hiển thị thông báo
+Form & Wizard:
+React Step Wizard (v5.3.11)
+Thư viện tạo form wizard
+OCR & Image Processing:
+Tesseract.js (v6.0.0)
+Thư viện OCR (Optical Character Recognition)
+Testing:
+@testing-library/react (v16.2.0)
+@testing-library/jest-dom (v6.6.3)
+@testing-library/user-event (v13.5.0)
+@testing-library/dom (v10.4.0)
+Các thư viện testing cho React
+Build Tools:
+React Scripts (v5.0.1)
+Công cụ build cho React
+Webpack (được cấu hình trong webpack.config.js)
+Module bundler
+Performance Monitoring:
+Web Vitals (v2.1.4)
+Thư viện đo lường hiệu

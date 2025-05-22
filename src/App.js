@@ -137,7 +137,7 @@ const Layout = ({ children }) => {
     return (
       <>
         {children}
-        {!isEditResumeWithId && !isCreateNewResume && !noHeaderFooterRoutes.includes(location.pathname) && <GlobalAIAssistant />}
+        {!isEditResumeWithId && !isCreateNewResume && <GlobalAIAssistant />}
         {shouldShowScrollDownButton && <ScrollDownButton />}
       </>
     );
@@ -160,7 +160,7 @@ const Layout = ({ children }) => {
         {children}
       </main>
       <Footer />
-      {!isEditResumeWithId && !isCreateNewResume && !noHeaderFooterRoutes.includes(location.pathname) && <GlobalAIAssistant />}
+      {!isEditResumeWithId && !isCreateNewResume && <GlobalAIAssistant />}
       <ScrollToTopButton />
       {shouldShowScrollDownButton && <ScrollDownButton />}
     </>

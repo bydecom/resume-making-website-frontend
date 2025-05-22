@@ -124,6 +124,15 @@ const AIConfig = () => {
 
   const handleAddQA = () => {
     setEditedKnowledge(prev => {
+      // If prev is null, initialize with a basic structure
+      if (!prev) {
+        return {
+          taskName: 'GENERAL',
+          type: 'GENERAL',
+          qaContent: [{ question: '', answer: '', isEditing: true }]
+        };
+      }
+
       const existingEmptyQA = prev.qaContent?.find(qa => !qa.question && !qa.answer);
       if (existingEmptyQA) return prev;
 

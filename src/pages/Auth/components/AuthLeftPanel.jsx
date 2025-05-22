@@ -1,10 +1,10 @@
 import React from "react";
 import { motion } from "framer-motion";
-import Img from '../../../assets/Image.png';
 
 const AuthLeftPanel = ({
   title = "Welcome to BestCV.io",
-  description = "Log in to your account to access your personalized dashboard and continue building your professional profile."
+  description = "Log in to your account to access your personalized dashboard and continue building your professional profile.",
+  imageSrc = "/placeholder.svg?height=400&width=400",
 }) => {
   return (
     <div className="hidden md:flex md:w-1/2 bg-gradient-to-br from-blue-50 to-blue-100 relative overflow-hidden">
@@ -26,8 +26,8 @@ const AuthLeftPanel = ({
             animate={{ opacity: 1, y: 0 }} 
             transition={{ duration: 0.6 }}
           >
-            <h1 className="text-3xl font-bold text-blue-600 mb-4 text-center">{title}</h1>
-            <p className="text-base text-gray-600 mb-8 text-center">{description}</p>
+            <h1 className="text-3xl font-bold text-blue-600 mb-4">{title}</h1>
+            <p className="text-base text-gray-600 mb-8">{description}</p>
           </motion.div>
 
           <motion.div
@@ -39,10 +39,11 @@ const AuthLeftPanel = ({
             <div className="w-full h-full rounded-lg shadow-xl overflow-hidden bg-white">
               <div className="absolute inset-0 bg-blue-100 opacity-50 z-0"></div>
               <img
-                src={Img}
+                src={imageSrc}
                 alt="Login illustration"
                 className="object-cover w-full h-full relative z-10"
               />
+
               {/* Decorative elements */}
               <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-blue-200 rounded-full opacity-70"></div>
               <div className="absolute -top-6 -left-6 w-16 h-16 bg-blue-300 rounded-full opacity-50"></div>

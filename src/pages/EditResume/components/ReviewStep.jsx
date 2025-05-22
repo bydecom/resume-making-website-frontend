@@ -97,7 +97,7 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
       
       // Chuyển hướng đến trang Dashboard
       navigate('/dashboard', { 
-        state: { message: 'Resume created successfully!' } 
+        state: { message: 'CV created successfully!' } 
       });
     } catch (error) {
       console.error('Error generating resume:', error);
@@ -127,7 +127,7 @@ const ReviewStep = ({ data, prevStep, handleSubmit, updateFormData }) => {
 
   return (
     <div className="space-y-6 overflow-hidden">
-      <h2 className="text-2xl font-bold text-gray-800 mb-4">Review Your Resume</h2>
+      <h2 className="text-2xl font-bold text-gray-800 mb-4">Review Your CV</h2>
       <p className="text-gray-600 mb-6">
         Click on any field to edit it directly. Changes will be reflected instantly in the preview.
       </p>

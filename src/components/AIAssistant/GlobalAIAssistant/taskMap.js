@@ -332,67 +332,83 @@ export const processChatbotAPI = async (userMessage, taskName, currentData = {})
       currentData
     });
     
-    // Trả về kết quả từ API
-    return response.data;
+    // Trả về kết quả từ API với cấu trúc phù hợp
+    if (response.data.status === 'success' && response.data.output) {
+      return {
+        output: response.data.output,
+        actions: response.data.output.actionRequired ? [response.data.output.actionRequired] : []
+      };
+    }
+    
+    // Fallback nếu response không có cấu trúc mong đợi
+    return {
+      output: {
+        outputMessage: "I'm sorry, I couldn't process that request properly.",
+        currentTask: taskName,
+        actionRequired: null
+      },
+      actions: []
+    };
   } catch (error) {
     console.error('Error calling chatbot API:', error);
     // Fallback nếu API lỗi
     return {
-      response: "I'm sorry, I couldn't connect to the server. Please try again later.",
+      output: {
+        outputMessage: "I'm sorry, I couldn't connect to the server. Please try again later.",
+        currentTask: taskName,
+        actionRequired: null
+      },
       actions: []
     };
   }
 };
 
-// Cập nhật hàm processMessage để sử dụng API cho CV và Resume mode
+// Cập nhật hàm processMessage để xử lý global mode như GENERAL task
 export const processMessage = async (message, mode = 'global', currentStep = 1, currentData = {}) => {
-  // Nếu là CV hoặc Resume mode, sử dụng API
+  // Check rule-based responses first
+  const intent = detectIntent(message);
+  
+  // Nếu là các intent cơ bản, xử lý locally
+  if (['greeting', 'thank_you', 'goodbye', 'help'].includes(intent)) {
+    console.log('Handling rule-based intent:', intent);
+    return processIntent(intent, { userMessage: message, mode });
+  }
+  
+  // Xác định taskName dựa trên mode
+  let taskName = '';
+  
   if (mode === 'cv' || mode === 'resume') {
-    // Map currentStep sang taskName
-    let taskName = '';
-    const prefix = mode.toUpperCase(); // 'CV' hoặc 'RESUME'
-    
+    const prefix = mode.toUpperCase();
     switch (currentStep) {
-      case 1:
-        taskName = `${prefix}_PERSONAL`;
-        break;
-      case 2:
-        taskName = `${prefix}_OBJECTIVE`;
-        break;
-      case 3:
-        taskName = `${prefix}_EXPERIENCE`;
-        break;
-      case 4:
-        taskName = `${prefix}_EDUCATION`;
-        break;
-      case 5:
-        taskName = `${prefix}_SKILLS`;
-        break;
-      case 6:
-        taskName = `${prefix}_ADDITIONAL`;
-        break;
-      case 7:
-        taskName = `${prefix}_SUMMARY`;
-        break;
-      case 8:
-        taskName = `${prefix}_REVIEW`;
-        break;
-      default:
-        taskName = `GENERAL`;
+      case 1: taskName = `${prefix}_PERSONAL`; break;
+      case 2: taskName = `${prefix}_OBJECTIVE`; break;
+      case 3: taskName = `${prefix}_EXPERIENCE`; break;
+      case 4: taskName = `${prefix}_EDUCATION`; break;
+      case 5: taskName = `${prefix}_SKILLS`; break;
+      case 6: taskName = `${prefix}_ADDITIONAL`; break;
+      case 7: taskName = `${prefix}_SUMMARY`; break;
+      case 8: taskName = `${prefix}_REVIEW`; break;
+      default: taskName = `${prefix}_GENERAL`;
     }
+  } else {
+    // Mode global hoặc các mode khác sẽ sử dụng GENERAL
+    taskName = 'GENERAL';
+  }
+  
+  // Gọi API chatbot cho mọi mode (bao gồm cả global)
+  try {
+    console.log('Calling chatbot API for task:', taskName);
+    const apiResponse = await processChatbotAPI(message, taskName, currentData);
+    return apiResponse;
+  } catch (error) {
+    console.error('Error in API processing:', error);
     
-    // Gọi API chatbot
-    try {
-      const apiResponse = await processChatbotAPI(message, taskName, currentData);
-      return apiResponse;
-    } catch (error) {
-      console.error('Error in API processing:', error);
-      
-      // Fallback to local processing if API fails
-      const intent = detectIntent(message);
-      let response = processIntent(intent, { userMessage: message, mode });
-      
-      // Customize response based on current step
+    // Fallback to local processing if API fails
+    console.log('Falling back to local processing');
+    let response = processIntent(intent, { userMessage: message, mode });
+    
+    // Customize response based on current step if in CV/Resume mode
+    if (mode === 'cv' || mode === 'resume') {
       const sectionName = getSectionNameFromStep(currentStep);
       if (sectionName) {
         const sectionHelp = getSectionHelp(sectionName);
@@ -400,13 +416,8 @@ export const processMessage = async (message, mode = 'global', currentStep = 1, 
           return sectionHelp;
         }
       }
-      
-      return response;
     }
-  } else {
-    // Xử lý local cho mode global
-    const intent = detectIntent(message);
-    let response = processIntent(intent, { userMessage: message, mode });
+    
     return response;
   }
 };

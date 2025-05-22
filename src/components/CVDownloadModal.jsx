@@ -3,6 +3,7 @@ import '@fortawesome/fontawesome-free/css/all.min.css';
 import CVPreview from '../pages/NewCV/components/CVPreview';
 import { templates } from '../templates';
 import { exportCVToPDF } from '../services/pdfExportService';
+import { exportCVToDocx } from '../services/docxExportService';
 import apiInstance from '../utils/axios';
 
 const CVDownloadModal = ({ isOpen, onClose, template, formData }) => {
@@ -12,6 +13,7 @@ const CVDownloadModal = ({ isOpen, onClose, template, formData }) => {
   const [showAllTemplates, setShowAllTemplates] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [fontsReady, setFontsReady] = useState(false);
+  const [exportFormat, setExportFormat] = useState('pdf'); // Add exportFormat state
   
   // Tạo ref để truy cập đến phần tử CV
   const cvElementRef = useRef(null);
@@ -40,10 +42,11 @@ const CVDownloadModal = ({ isOpen, onClose, template, formData }) => {
   }, [isOpen]);
 
   const downloadTips = [
-    "Your CV will be downloaded as a PDF",
+    "Your CV can be downloaded as PDF or DOCX",
     "Double-check the formatting in the preview",
+    "PDF format retains exact formatting for online applications",
+    "DOCX format allows easy editing for customization",
     "Save different versions for different job applications",
-    "Review the PDF after downloading",
     "Ensure your contact information is correct",
     "Check if all sections are properly aligned"
   ];
@@ -61,7 +64,7 @@ const CVDownloadModal = ({ isOpen, onClose, template, formData }) => {
         try {
           await apiInstance.get(`/api/downloads/cv/${cvId}`, {
             params: {
-              format: 'pdf',
+              format: exportFormat,
               templateId: selectedTemplateId,
               templateName: templates[selectedTemplateId]?.name || 'Default Template'
             }
@@ -73,17 +76,27 @@ const CVDownloadModal = ({ isOpen, onClose, template, formData }) => {
         }
       }
 
-      // Then generate and download the PDF
-      await exportCVToPDF({
-        cvElement: cvElementRef.current,
-        formData,
-        onStatusChange: setIsDownloading,
-        onError: (error) => {
-          alert('Failed to generate PDF. Please try again.');
-        }
-      });
+      // Generate and download the file based on selected format
+      if (exportFormat === 'pdf') {
+        await exportCVToPDF({
+          cvElement: cvElementRef.current,
+          formData,
+          onStatusChange: setIsDownloading,
+          onError: (error) => {
+            alert('Failed to generate PDF. Please try again.');
+          }
+        });
+      } else if (exportFormat === 'docx') {
+        await exportCVToDocx({
+          formData,
+          onStatusChange: setIsDownloading,
+          onError: (error) => {
+            alert('Failed to generate DOCX. Please try again.');
+          }
+        });
+      }
     } catch (error) {
-      console.error('Error in handleDownload:', error);
+      console.error(`Error in handleDownload (${exportFormat}):`, error);
     }
   };
 
@@ -107,6 +120,24 @@ const CVDownloadModal = ({ isOpen, onClose, template, formData }) => {
           >
             Cancel
           </button>
+          
+          {/* Format Selection Dropdown */}
+          <div className="relative">
+            <select
+              value={exportFormat}
+              onChange={(e) => setExportFormat(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors appearance-none pr-8"
+            >
+              <option value="pdf">PDF Format</option>
+              <option value="docx">DOCX Format</option>
+            </select>
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
+          
           <button 
             onClick={handleDownload}
             disabled={isDownloading || !fontsReady}
@@ -118,7 +149,7 @@ const CVDownloadModal = ({ isOpen, onClose, template, formData }) => {
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
             </svg>
-            {isDownloading ? 'Generating PDF...' : (!fontsReady ? 'Loading Fonts...' : 'Download PDF')}
+            {isDownloading ? 'Generating file...' : (!fontsReady ? 'Loading Fonts...' : `Download ${exportFormat.toUpperCase()}`)}
           </button>
         </div>
       </div>
@@ -205,7 +236,7 @@ const CVDownloadModal = ({ isOpen, onClose, template, formData }) => {
                 <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
                   <h4 className="font-medium text-blue-700 mb-2">Ready to download?</h4>
                   <p className="text-sm text-gray-700">
-                    Click the Download PDF button to save your CV.
+                    Select your preferred format and click the download button to save your CV.
                   </p>
                 </div>
               </div>
