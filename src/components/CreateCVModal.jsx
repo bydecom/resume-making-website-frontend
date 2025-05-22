@@ -505,13 +505,13 @@ const CreateCVModal = ({ isOpen, onClose }) => {
               )}
             </div>
             
-            <div className="bg-gray-50 p-6 rounded-lg mb-2">
+            <div className="bg-gray-50 p-2 rounded-lg mb-2">
               <h3 className="text-lg font-medium mb-1">How it works</h3>
               <ol className="space-y-2 list-decimal list-inside text-gray-700">
                 <li>Upload your existing CV in PDF or Word format</li>
                 <li>Our system will extract information from your document</li>
                 <li>Review and edit the extracted information</li>
-                <li>Choose from our templates and customize your new CV</li>
+                <li>Customize your new CV with our AI assistant</li>
               </ol>
             </div>
           </div>

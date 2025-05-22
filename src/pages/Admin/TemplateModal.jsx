@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-toastify';
-import { FaExchangeAlt, FaLightbulb, FaDownload, FaChartBar } from 'react-icons/fa';
+import { FaExchangeAlt, FaLightbulb, FaDownload, FaChartBar, FaFileWord } from 'react-icons/fa';
 import api from '../../utils/api';
 import { templates } from '../../templates';
 import { exportCVToPDF } from '../../services/pdfExportService';
+import { exportCVToDocx } from '../../services/docxExportService';
 
 // Import ảnh thumbnail
 import MinimalistThumbnail from '../../assets/cv-thumnails/minimalist.jpg';
@@ -148,6 +149,7 @@ const TemplateModal = ({ template: initialTemplate, isOpen, onClose, onUpdate })
   const [loading, setLoading] = useState(true);
   const [otherTemplates, setOtherTemplates] = useState([]);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadFormat, setDownloadFormat] = useState('pdf'); // Add format state
   const [fontsReady, setFontsReady] = useState(false);
   const cvElementRef = useRef(null);
   const [formData, setFormData] = useState({
@@ -317,16 +319,27 @@ const TemplateModal = ({ template: initialTemplate, isOpen, onClose, onUpdate })
 
     try {
       setIsDownloading(true);
-      await exportCVToPDF({
-        cvElement: cvElementRef.current,
-        formData: mockFormData,
-        onStatusChange: setIsDownloading,
-        onError: (error) => {
-          toast.error('Failed to generate PDF. Please try again.');
-        }
-      });
+      
+      if (downloadFormat === 'pdf') {
+        await exportCVToPDF({
+          cvElement: cvElementRef.current,
+          formData: mockFormData,
+          onStatusChange: setIsDownloading,
+          onError: (error) => {
+            toast.error('Failed to generate PDF. Please try again.');
+          }
+        });
+      } else if (downloadFormat === 'docx') {
+        await exportCVToDocx({
+          formData: mockFormData,
+          onStatusChange: setIsDownloading,
+          onError: (error) => {
+            toast.error('Failed to generate DOCX. Please try again.');
+          }
+        });
+      }
     } catch (error) {
-      console.error('Error in handleDownload:', error);
+      console.error(`Error in handleDownload (${downloadFormat}):`, error);
       toast.error('Failed to download template preview');
     } finally {
       setIsDownloading(false);
@@ -345,6 +358,24 @@ const TemplateModal = ({ template: initialTemplate, isOpen, onClose, onUpdate })
             <div className="text-gray-500">Loading...</div>
           ) : (
             <>
+              {/* Format selection dropdown */}
+              <div className="relative">
+                <select
+                  value={downloadFormat}
+                  onChange={(e) => setDownloadFormat(e.target.value)}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors appearance-none pr-8"
+                  disabled={isDownloading || !fontsReady}
+                >
+                  <option value="pdf">PDF Format</option>
+                  <option value="docx">DOCX Format</option>
+                </select>
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+              
               <button
                 onClick={handleDownload}
                 disabled={isDownloading || !fontsReady}
@@ -352,8 +383,12 @@ const TemplateModal = ({ template: initialTemplate, isOpen, onClose, onUpdate })
                   (isDownloading || !fontsReady) ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
               >
-                <FaDownload className="h-4 w-4" />
-                {isDownloading ? 'Generating PDF...' : (!fontsReady ? 'Loading Fonts...' : 'Download Preview')}
+                {downloadFormat === 'pdf' ? (
+                  <FaDownload className="h-4 w-4" />
+                ) : (
+                  <FaFileWord className="h-4 w-4" />
+                )}
+                {isDownloading ? 'Generating file...' : (!fontsReady ? 'Loading Fonts...' : `Download ${downloadFormat.toUpperCase()}`)}
               </button>
               <button
                 onClick={() => setIsEditing(!isEditing)}

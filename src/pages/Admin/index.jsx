@@ -190,16 +190,16 @@ const AdminPage = () => {
                 </SidebarMenuItem>
 
                 {/* UI Management */}
-                <SidebarMenuItem>
+                {/* <SidebarMenuItem>
                   <SidebarMenuButton asChild className="hover:!bg-blue-600 text-white">
                     <Link to="/admin/ui">
                       <FiPenTool className="h-4 w-4 mr-2" />
                       <span>UI Management</span>
                     </Link>
                   </SidebarMenuButton>
-                </SidebarMenuItem>
+                </SidebarMenuItem> */}
 
-                {/* AI Prompts */}
+                {/* AI Prompts
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild className="hover:!bg-blue-600 text-white">
                     <Link to="/admin/prompts">
@@ -207,7 +207,7 @@ const AdminPage = () => {
                       <span>AI Prompts</span>
                     </Link>
                   </SidebarMenuButton>
-                </SidebarMenuItem>
+                </SidebarMenuItem> */}
 
                 {/* AI Config */}
                 <SidebarMenuItem>

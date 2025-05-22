@@ -30,6 +30,35 @@ export const exportCVToDocx = async ({ formData, onStatusChange, onError }) => {
 };
 
 /**
+ * Converts Resume data to DOCX format and triggers download
+ * @param {Object} options - Export options
+ * @param {Object} options.formData - Resume data
+ * @param {Function} options.onStatusChange - Callback for export status changes
+ * @param {Function} options.onError - Callback for handling errors
+ */
+export const exportResumeToDocx = async ({ formData, onStatusChange, onError }) => {
+  try {
+    onStatusChange?.(true);
+    
+    // Use the same normalizeData and createDocxFromCV functions
+    // Since resume structure is similar to CV structure
+    const normalizedData = normalizeData(formData);
+    const doc = createDocxFromCV(normalizedData);
+    
+    const buffer = await Packer.toBlob(doc);
+    saveAs(buffer, `${normalizedData.personal?.name || formData.name || 'Resume'}.docx`);
+    
+    onStatusChange?.(false);
+    return true;
+  } catch (error) {
+    console.error('Error exporting Resume to DOCX:', error);
+    onStatusChange?.(false);
+    onError?.(error);
+    return false;
+  }
+};
+
+/**
  * Check if a value is considered empty or N/a
  * @param {any} value - Value to check
  * @returns {boolean} - True if value is empty or N/a
@@ -889,4 +918,4 @@ function createDocxFromCV(formData) {
   return doc;
 }
 
-export default { exportCVToDocx };
+export default { exportCVToDocx, exportResumeToDocx };

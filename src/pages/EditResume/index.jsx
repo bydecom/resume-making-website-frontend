@@ -1227,7 +1227,7 @@ const EditResume = () => {
               className={`fixed right-4 bottom-20 bg-white rounded-lg shadow-lg overflow-hidden z-10 ${
                 showHints || showAI ? '' : 'hidden'
               }`}
-              style={{ maxHeight: 'calc(100vh - 200px)' }}
+              style={{ maxHeight: 'calc(110vh - 200px)' }}
             >
               <div className="relative">
                 {/* Close button */}
