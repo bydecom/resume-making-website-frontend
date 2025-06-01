@@ -143,6 +143,11 @@ const GlobalAIAssistant = () => {
     const newMessages = [...messages, { text: inputText, isUser: true }];
     setMessages(newMessages);
     
+    // Reset states when new message is sent
+    setShowTemplates(false); // Reset template display
+    setTemplates([]); // Clear templates data
+    setShowPdfUpload(false); // Reset PDF upload display
+    
     // Store the message text before clearing input
     const messageText = inputText;
     
@@ -157,11 +162,6 @@ const GlobalAIAssistant = () => {
       }, 0);
     }
     
-    // Hide the PDF upload interface if a new message is sent while it's shown
-    if (showPdfUpload) {
-      setShowPdfUpload(false);
-    }
-    
     // Simulate AI typing
     setIsTyping(true);
     
@@ -172,19 +172,29 @@ const GlobalAIAssistant = () => {
       // Handle any special actions returned
       if (result.actions && result.actions.length > 0) {
         handleChatbotActions(result.actions);
+        
+        // Add bot message with special content flag
+        const hasTemplates = result.actions.some(action => action.type === 'SHOW_TEMPLATES');
+        
+        setTimeout(() => {
+          setMessages([...newMessages, { 
+            text: result.output?.outputMessage || result.response || "I'm sorry, I couldn't process that request properly.", 
+            isUser: false,
+            showTemplates: hasTemplates, // Add flag to indicate if this message should show templates
+            templates: hasTemplates ? result.actions.find(a => a.type === 'SHOW_TEMPLATES').templates : null
+          }]);
+          setIsTyping(false);
+        }, 1000);
       } else {
-        // If no PDF upload action is returned in the result, clear any pending PDF upload request
-        setPendingPdfUploadRequest(false);
+        // Normal message without templates
+        setTimeout(() => {
+          setMessages([...newMessages, { 
+            text: result.output?.outputMessage || result.response || "I'm sorry, I couldn't process that request properly.", 
+            isUser: false
+          }]);
+          setIsTyping(false);
+        }, 1000);
       }
-      
-      // Set response message after a delay to simulate typing
-      setTimeout(() => {
-        setMessages([...newMessages, { 
-          text: result.output?.outputMessage || result.response || "I'm sorry, I couldn't process that request properly.", 
-          isUser: false 
-        }]);
-        setIsTyping(false);
-      }, 1000);
     } catch (error) {
       console.error('Error in message processing:', error);
       // Simple fallback for demo
@@ -202,20 +212,16 @@ const GlobalAIAssistant = () => {
 
   // Handle actions returned from chatbot responses
   const handleChatbotActions = (actions) => {
-    // Check if there's a REQUEST_PDF_UPLOAD action
-    const hasPdfUploadAction = actions.some(action => action.type === 'REQUEST_PDF_UPLOAD');
-    
-    // If there's no PDF upload action, clear any pending PDF upload request and hide the upload interface
-    if (!hasPdfUploadAction) {
-      setPendingPdfUploadRequest(false);
-      setShowPdfUpload(false);
-    }
-    
     actions.forEach(action => {
       switch (action.type) {
         case 'REQUEST_PDF_UPLOAD':
-          // Mark as pending - will be shown after message is fully displayed
-          setPendingPdfUploadRequest(true);
+          // Thêm delay để đảm bảo message hiển thị trước
+          setTimeout(() => {
+            setShowPdfUpload(true);
+            setPendingPdfUploadRequest(false);
+            // Scroll to bottom sau khi hiển thị PDF upload interface
+            setTimeout(scrollToBottom, 100);
+          }, 800);
           break;
         case 'SHOW_TEMPLATES':
           setTemplates(action.templates || []);
@@ -451,8 +457,9 @@ const GlobalAIAssistant = () => {
   };
 
   // Templates Carousel
-  const renderTemplatesCarousel = () => {
-    if (!showTemplates || templates.length === 0) return null;
+  const renderTemplatesCarousel = (templatesData = null) => {
+    const templatesToRender = templatesData || templates;
+    if (!templatesToRender || templatesToRender.length === 0) return null;
     
     // Calculate if scroll buttons should be shown
     const showScrollButtons = carouselRef.current && carouselRef.current.scrollWidth > carouselRef.current.clientWidth;
@@ -484,7 +491,7 @@ const GlobalAIAssistant = () => {
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           <div className="flex space-x-3" style={{ minWidth: 'min-content' }}>
-            {templates.map((template) => {
+            {templatesToRender.map((template) => {
               // Get thumbnail from map using thumbnailName
               // Construct thumbnail path
               const thumbnailPath = template.thumbnailName 
@@ -576,11 +583,46 @@ const GlobalAIAssistant = () => {
     ]);
   };
 
+  // Cập nhật phần PDF Upload Interface để thêm nhiều tính năng hơn
+  const renderPdfUploadInterface = () => {
+    if (!showPdfUpload) return null;
+    
+    return (
+      <div className="my-4">
+        <div 
+          className="border-2 border-dashed border-blue-300 rounded-lg p-4 text-center cursor-pointer hover:bg-blue-50 transition-colors"
+          onClick={() => fileInputRef.current.click()}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+          onDragEnter={(e) => {
+            e.preventDefault();
+            e.currentTarget.classList.add('bg-blue-50');
+          }}
+          onDragLeave={(e) => {
+            e.preventDefault();
+            e.currentTarget.classList.remove('bg-blue-50');
+          }}
+        >
+          <FiUpload className="mx-auto text-blue-500 mb-2" size={24} />
+          <p className="text-sm text-gray-600 mb-1">
+            Drag and drop your PDF resume here
+          </p>
+          <p className="text-xs text-gray-500 mb-2">
+            or click to browse files
+          </p>
+          <div className="text-xs text-gray-400">
+            Supported format: PDF (Max size: 10MB)
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // Don't render if we're on an excluded page
   if (isExcluded) return null;
 
   return (
-    <div style={{ position: 'fixed', bottom: '24px', right: '30px', zIndex: 10 }}>
+    <div style={{ position: 'fixed', bottom: '24px', right: '30px', zIndex: 9999 }}>
       {/* Hidden file input */}
       <input 
         type="file" 
@@ -615,7 +657,7 @@ const GlobalAIAssistant = () => {
             maxHeight: isFullScreen ? '100%' : '80vh',
             maxWidth: isFullScreen ? '100%' : '90vw',
             marginBottom: isFullScreen ? '0' : '8px',
-            zIndex: 10000,
+            zIndex: 99999,
             transition: 'all 0.3s ease'
           }}
         >
@@ -650,49 +692,32 @@ const GlobalAIAssistant = () => {
                 <div className={isFullScreen ? 'max-w-4xl mx-auto' : ''}>
                   <div className="space-y-3">
                     {messages.map((message, index) => (
-                      <div 
-                        key={index} 
-                        className={`mb-3 ${message.isUser ? 'text-right' : ''}`}
-                      >
-                        <div 
-                          className={`inline-block p-3 rounded-lg max-w-[85%] ${
-                            message.isUser 
-                              ? 'bg-blue-500 text-white rounded-br-none text-left' 
-                              : 'bg-gray-100 text-gray-800 rounded-bl-none text-left'
-                          }`}
-                          style={{ 
-                            wordBreak: 'break-word', 
-                            overflowWrap: 'break-word',
-                            whiteSpace: 'pre-wrap'
-                          }}
-                        >
-                          {message.text}
+                      <React.Fragment key={index}>
+                        <div className={`mb-3 ${message.isUser ? 'text-right' : ''}`}>
+                          <div 
+                            className={`inline-block p-3 rounded-lg max-w-[85%] ${
+                              message.isUser 
+                                ? 'bg-blue-500 text-white rounded-br-none text-left' 
+                                : 'bg-gray-100 text-gray-800 rounded-bl-none text-left'
+                            }`}
+                            style={{ 
+                              wordBreak: 'break-word', 
+                              overflowWrap: 'break-word',
+                              whiteSpace: 'pre-wrap'
+                            }}
+                          >
+                            {message.text}
+                          </div>
                         </div>
-                      </div>
+                        
+                        {/* Show templates right after the bot message that triggered them */}
+                        {!message.isUser && message.showTemplates && message.templates && (
+                          <div className="mt-2 mb-4">
+                            {renderTemplatesCarousel(message.templates)}
+                          </div>
+                        )}
+                      </React.Fragment>
                     ))}
-                    
-                    {/* Templates Carousel */}
-                    {renderTemplatesCarousel()}
-                    
-                    {/* PDF Upload Interface */}
-                    {showPdfUpload && (
-                      <div className="my-4">
-                        <div 
-                          className="border-2 border-dashed border-blue-300 rounded-lg p-4 text-center cursor-pointer hover:bg-blue-50 transition-colors"
-                          onClick={() => fileInputRef.current.click()}
-                          onDragOver={handleDragOver}
-                          onDrop={handleDrop}
-                        >
-                          <FiUpload className="mx-auto text-blue-500 mb-2" size={24} />
-                          <p className="text-sm text-gray-600 mb-1">
-                            Drag and drop your PDF resume here
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            or click to browse files
-                          </p>
-                        </div>
-                      </div>
-                    )}
                     
                     {/* Typing Indicator */}
                     {isTyping && (
@@ -782,7 +807,8 @@ const GlobalAIAssistant = () => {
           outline: 'none',
           cursor: 'pointer',
           boxShadow: '0 4px 6px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.08)',
-          transform: showChat ? 'scale(1.05)' : 'scale(1)'
+          transform: showChat ? 'scale(1.05)' : 'scale(1)',
+          zIndex: 99999
         }}
       >
         <TbMessageChatbot size={26} className={`transition-transform duration-300 ${showChat ? 'rotate-12' : ''}`} />

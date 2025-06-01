@@ -72,9 +72,8 @@ const handleEducationSection = (data) => {
 };
 
 const handleResumeReview = (data) => {
-  // This would normally connect to a backend service
   return {
-    response: "I'd be happy to review your resume! Please upload your current resume as a PDF, and I'll provide feedback on its structure, content, and formatting.",
+    response: "I'll help you analyze your resume. Please upload your PDF resume and I'll provide detailed feedback on its content and structure.",
     actions: [
       {
         type: 'REQUEST_PDF_UPLOAD'
@@ -203,21 +202,17 @@ export const processIntent = (intent, data = {}) => {
 export const detectIntent = (message) => {
   const lowerMessage = message.toLowerCase();
   
-  // Check for template display requests
-  if (lowerMessage.match(/show template|templates|resume template|cv template|see template|view template|browse template|template gallery/)) {
-    return 'resume_templates';
-  }
-  
-  // Check for PDF upload request specifically
+  // Check for PDF upload requests - thêm pattern đơn giản "pdf"
   if (lowerMessage === 'pdf' || 
-      lowerMessage.includes('upload pdf') || 
-      lowerMessage.includes('import pdf') || 
-      lowerMessage.includes('upload a pdf') ||
-      lowerMessage.includes('submit pdf') ||
-      lowerMessage.includes('upload resume') ||
-      lowerMessage.includes('upload my resume') ||
-      lowerMessage.includes('upload cv')) {
+      lowerMessage.match(/^(upload|import|submit|scan|analyze|review|check)(\s+my)?(\s+pdf|\s+resume|\s+cv)?$/)) {
+    console.log('Detected resume_review intent for PDF upload');
     return 'resume_review';
+  }
+
+  // Check for template display requests
+  if (lowerMessage.match(/show.*templates?|templates?|resume templates?|cv templates?|see templates?|view templates?|browse templates?|templates? gallery/)) {
+    console.log('Detected resume_templates intent');
+    return 'resume_templates';
   }
   
   // Simple keyword matching for intent detection
@@ -368,8 +363,8 @@ export const processMessage = async (message, mode = 'global', currentStep = 1, 
   // Check rule-based responses first
   const intent = detectIntent(message);
   
-  // Nếu là các intent cơ bản, xử lý locally
-  if (['greeting', 'thank_you', 'goodbye', 'help'].includes(intent)) {
+  // Thêm 'resume_review' vào danh sách các intent xử lý locally
+  if (['greeting', 'thank_you', 'goodbye', 'help', 'resume_templates', 'resume_review'].includes(intent)) {
     console.log('Handling rule-based intent:', intent);
     return processIntent(intent, { userMessage: message, mode });
   }
@@ -395,7 +390,7 @@ export const processMessage = async (message, mode = 'global', currentStep = 1, 
     taskName = 'GENERAL';
   }
   
-  // Gọi API chatbot cho mọi mode (bao gồm cả global)
+  // Nếu không phải intent cần xử lý locally thì mới gọi API
   try {
     console.log('Calling chatbot API for task:', taskName);
     const apiResponse = await processChatbotAPI(message, taskName, currentData);
