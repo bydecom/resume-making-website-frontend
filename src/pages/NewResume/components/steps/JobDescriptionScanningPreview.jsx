@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axiosInstance from '../../../../utils/axios';
+import api, { callApi } from '../../../../utils/api';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -205,8 +205,8 @@ const JobDescriptionScanningPreview = ({ isOpen, onComplete, data }) => {
         tags: ['auto-generated']
       };
       
-      const response = await axiosInstance.post('/api/job-descriptions', requestData);
-      return response.data.data;
+      const response = await callApi('/api/job-descriptions', 'POST', requestData);
+      return response.data;
     } catch (error) {
       setSaveError(error.message);
       throw error;

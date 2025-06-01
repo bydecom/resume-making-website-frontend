@@ -2,7 +2,7 @@ import ProfessionalBlueTemplate from './ProfessionalBlueTemplate/index.jsx';
 import MinimalistTemplate from './MinimalistTemplate/index.jsx';
 import ModernTemplate from './ModernTemplate/index.jsx';
 import ProfessionalCVTemplate from './ProfessionalCVTemplate/index.jsx';
-import axiosInstance from '../utils/axios.js';
+import { callApi } from '../utils/api';
 
 // Import preview images
 import professionalBluePreview from '../assets/cv-thumnails/professional-blue.jpg';
@@ -50,8 +50,8 @@ export const templates = {
 // Function to fetch active templates from API
 export const fetchActiveTemplates = async () => {
   try {
-    const response = await axiosInstance.get('/api/templates/active');
-    const activeTemplatesData = response.data.data;
+    const response = await callApi('/api/templates/active', 'GET');
+    const activeTemplatesData = response.data;
 
     // Combine API data with static component data
     const dynamicTemplates = {};

@@ -21,6 +21,7 @@ import {
 } from "lucide-react"
 import { getTemplateById } from '../../templates'
 import JobDescriptionDetails from './JobDescriptionDetails'
+import { useNavigate, useLocation } from "react-router-dom"
 
 // Custom components
 const CustomTooltip = ({ children, content }) => {
@@ -109,10 +110,11 @@ const ResumeReview = ({ resumeData, jobData, onClose, onEdit }) => {
   const [approvalStatus, setApprovalStatus] = useState("pending")
   const [showLeftPanel, setShowLeftPanel] = useState(true)
   const [showRightPanel, setShowRightPanel] = useState(true)
+  const navigate = useNavigate();
 
   // Get the actual resume data from the response structure
   const actualResumeData = resumeData?.data?.[0] || resumeData;
-
+  
   // Add debug logs
   useEffect(() => {
     console.log("Resume Data:", actualResumeData);
@@ -199,8 +201,11 @@ const ResumeReview = ({ resumeData, jobData, onClose, onEdit }) => {
 
   // Add handleEdit function
   const handleEdit = () => {
-    if (onEdit && actualResumeData?._id) {
-      onEdit(actualResumeData._id);
+    if (actualResumeData?._id) {
+      // Đóng modal trước khi chuyển trang
+      onClose();
+      // Điều hướng đến trang edit với ID của resume
+      navigate(`/edit-resume/${actualResumeData._id}`);
     }
   };
 

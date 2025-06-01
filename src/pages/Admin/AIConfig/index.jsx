@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import axiosInstance from "../../../utils/axios";
+import api, { callApi } from "../../../utils/api";
 import Modal from '../../../components/Modal';
 import { Search, Loader, Save, X, Download, Upload } from "lucide-react";
 import { toast } from 'react-toastify';
@@ -45,8 +45,8 @@ const AIConfig = () => {
   const fetchConfigs = async () => {
     try {
       setLoading(true);
-      const response = await axiosInstance.get('/api/admin/ai-configs');
-      setConfigs(response.data.data || []);
+      const response = await callApi('/api/admin/ai-configs', 'GET');
+      setConfigs(response.data || []);
       setError(null);
     } catch (err) {
       setError('Failed to fetch AI configs.');
@@ -66,8 +66,8 @@ const AIConfig = () => {
       if (selectedConfig && activeTab === 'knowledge') {
         try {
           setLoadingKnowledge(true);
-          const response = await axiosInstance.get(`/api/knowledge?taskName=${selectedConfig.taskName}&type=SPECIFIC`);
-          const data = response.data.data[0];
+          const response = await callApi(`/api/knowledge?taskName=${selectedConfig.taskName}&type=SPECIFIC`, 'GET');
+          const data = response.data[0];
           setKnowledgeData(data);
           setEditedKnowledge(data);
           setLoadingKnowledge(false);
@@ -86,8 +86,8 @@ const AIConfig = () => {
       if (activeType === 'GENERAL') {
         try {
           setLoadingGeneralKnowledge(true);
-          const response = await axiosInstance.get(`/api/knowledge?taskName=GENERAL&type=GENERAL`);
-          const data = response.data.data[0];
+          const response = await callApi(`/api/knowledge?taskName=GENERAL&type=GENERAL`, 'GET');
+          const data = response.data[0];
           setGeneralKnowledge(data);
           setEditedGeneralKnowledge(data);
           setLoadingGeneralKnowledge(false);
@@ -155,7 +155,7 @@ const AIConfig = () => {
       setLoading(true);
 
       // Save AI Config changes
-      const configResponse = await axiosInstance.put(`/api/admin/ai-configs/${editedConfig._id}`, {
+      const configResponse = await callApi(`/api/admin/ai-configs/${editedConfig._id}`, 'PUT', {
         name: editedConfig.name,
         description: editedConfig.description,
         apiKey: editedConfig.apiKey,
@@ -177,16 +177,17 @@ const AIConfig = () => {
 
       // If we have knowledge data and it's been edited, save it too
       if (editedKnowledge && selectedConfig?.taskName) {
-        const knowledgeResponse = await axiosInstance.put(
+        const knowledgeResponse = await callApi(
           `/api/knowledge/task/${selectedConfig.taskName}`,
+          'PUT',
           editedKnowledge
         );
-        if (knowledgeResponse.data.status === 'success') {
-          setKnowledgeData(knowledgeResponse.data.data);
+        if (knowledgeResponse.status === 'success') {
+          setKnowledgeData(knowledgeResponse.data);
         }
       }
 
-      if (configResponse.data.success) {
+      if (configResponse.success) {
         // Fetch fresh data instead of updating local state
         await fetchConfigs();
         setModalOpen(false);

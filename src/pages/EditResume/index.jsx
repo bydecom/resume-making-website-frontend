@@ -27,7 +27,7 @@ import ResumeSaveConfirmation from '../../components/ResumeSaveConfirmation';
 import './lib/input-styles.css';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import axiosInstance from '../../utils/axios';
+import api, { callApi } from '../../utils/api';
 import { getDefaultTemplate, getTemplateById } from '../../templates';
 
 // Add these styles at the beginning of the file, after the imports
@@ -339,10 +339,10 @@ const EditResume = () => {
         setIsEditing(true);
         
         // Fetch dữ liệu Resume
-        axiosInstance.get(`/api/resumes/${location.state.resumeId}`)
+        callApi(`/api/resumes/${location.state.resumeId}`, 'GET')
           .then(response => {
-            if (response.data && (response.data.success || response.data.status === 'success')) {
-              const resumeData = response.data.data;
+            if (response && (response.success || response.status === 'success')) {
+              const resumeData = response.data;
               
               // Đảm bảo template ID hợp lệ
               const template = resumeData.template || { id: getDefaultTemplate().id };
@@ -419,10 +419,10 @@ const EditResume = () => {
       setIsEditing(true);
       
       // Fetch dữ liệu Resume hiện có từ API
-      axiosInstance.get(`/api/resumes/${urlResumeId}`)
+      callApi(`/api/resumes/${urlResumeId}`, 'GET')
         .then(response => {
-          if (response.data && (response.data.success || response.data.status === 'success')) {
-            const resumeData = response.data.data;
+          if (response && (response.success || response.status === 'success')) {
+            const resumeData = response.data;
             
             // Đảm bảo template ID hợp lệ
             const template = resumeData.template || { id: getDefaultTemplate().id };
@@ -577,16 +577,16 @@ const EditResume = () => {
       }
       
       // Luôn sử dụng PUT để cập nhật resume
-      const response = await axiosInstance.put(`/api/resumes/${id}`, formattedData);
+      const response = await callApi(`/api/resumes/${id}`, 'PUT', formattedData);
 
-      if (response.data && (response.data.success || response.data.status === 'success')) {
+      if (response && (response.success || response.status === 'success')) {
         toast.success(`Resume "${finalName}" updated successfully!`);
 
         // Chuyển hướng về trang được chỉ định hoặc dashboard
         navigate(returnPath, {
           state: { 
             message: `Resume updated successfully!`,
-            resumeId: response.data.data?._id || id
+            resumeId: response.data?._id || id
           },
           replace: true
         });

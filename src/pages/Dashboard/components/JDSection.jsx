@@ -17,7 +17,7 @@ import {
 
 import { Input } from "../../../components/ui/input"
 import { Label } from "../../../components/ui/label"
-import axiosInstance from "../../../utils/axios"
+import api, { callApi } from "../../../utils/api"
 
 
 // Mock data for fallback if needed
@@ -82,7 +82,7 @@ export default function JDSection({ jobDescriptions = [], isLoading = false, err
 
     try {
       // 4. Gọi API
-      await axiosInstance.put(`/api/job-descriptions/${jobId}`, {
+      await callApi(`/api/job-descriptions/${jobId}`, 'PUT', {
         applicationStatus: targetApplicationStatus // Gửi trạng thái mới lên server
       });
 
@@ -144,7 +144,7 @@ export default function JDSection({ jobDescriptions = [], isLoading = false, err
 
     try {
       // 2. Gọi API
-      await axiosInstance.put(`/api/job-descriptions/${jobId}`, updatedInterviewData);
+      await callApi(`/api/job-descriptions/${jobId}`, 'PUT', updatedInterviewData);
 
       // 3. Cập nhật state `jobs` cục bộ sau khi API thành công
       setJobs(prevJobs =>
@@ -293,7 +293,7 @@ export default function JDSection({ jobDescriptions = [], isLoading = false, err
   const handleSoftDelete = async (jobId) => {
     try {
       setIsUpdating(true);
-      await axiosInstance.delete(`/api/job-descriptions/${jobId}`);
+      await callApi(`/api/job-descriptions/${jobId}`, 'DELETE');
       
       // Update local state to remove the deleted job
       setJobs(prevJobs => prevJobs.filter(job => job._id !== jobId));

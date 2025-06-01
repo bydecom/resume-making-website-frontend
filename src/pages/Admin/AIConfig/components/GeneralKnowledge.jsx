@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Loader, Save, X, Upload, Download, Plus } from "lucide-react";
 import { toast } from 'react-toastify';
-import axiosInstance from "../../../../utils/axios";
+import api, { callApi } from "../../../../utils/api";
 
 const GeneralKnowledge = ({
   loadingGeneralKnowledge,
@@ -146,12 +146,13 @@ const GeneralKnowledge = ({
   const handleSave = async () => {
     try {
       setSavingKnowledge(true);
-      const response = await axiosInstance.put(
+      const response = await callApi(
         `/api/knowledge/task/GENERAL`,
+        'PUT',
         editedGeneralKnowledge
       );
-      if (response.data.status === 'success') {
-        setGeneralKnowledge(response.data.data);
+      if (response.status === 'success') {
+        setGeneralKnowledge(response.data);
         setHasUnsavedChanges(false);
         toast.success('General knowledge saved successfully');
       }

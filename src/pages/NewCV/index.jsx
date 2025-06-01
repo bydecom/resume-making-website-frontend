@@ -239,14 +239,14 @@ const NewCV = () => {
     setShowSaveConfirmation(true);
   };
   
-  // Thêm vào useEffect để kiểm tra xem có đang edit CV không
+  // Sửa phần useEffect để fetch CV data khi editing
   useEffect(() => {
     // Nếu đến từ trang analyzing và có tips
     if (location.state?.fromAnalyzing && location.state?.tips) {
       setTips(location.state.tips);
       setShowHints(true);
       setIsNewResume(true);
-      return; // Không cần fetch CV data
+      return;
     }
 
     // Kiểm tra nếu có cvId trong location state (từ trang dashboard)
@@ -254,44 +254,39 @@ const NewCV = () => {
       setCvId(location.state.cvId);
       setIsEditing(true);
       
-      // Fetch dữ liệu CV hiện có từ API
-      const token = localStorage.getItem('token');
-      const apiUrl = `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/cv/${location.state.cvId}`;
-      
-      fetch(apiUrl, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`
+      // Fetch CV data using callApi
+      const fetchCV = async () => {
+        try {
+          const response = await callApi(`/api/cv/${location.state.cvId}`, 'GET');
+          
+          if (response.status === 'success') {
+            // Đảm bảo template ID hợp lệ
+            const template = response.data.template || { id: getDefaultTemplate().id };
+            
+            // Kiểm tra xem template ID từ server có tồn tại trong hệ thống không
+            const validTemplate = getTemplateById(template.id);
+            if (!validTemplate) {
+              template.id = getDefaultTemplate().id;
+            }
+            
+            setFormData({
+              ...response.data,
+              template: template
+            });
+          } else {
+            throw new Error(response.message || 'Failed to fetch CV data');
+          }
+        } catch (error) {
+          console.error('Error fetching CV:', error);
+          toast.error('Could not load CV data. Please try again.');
         }
-      })
-      .then(response => {
-        if (!response.ok) throw new Error('Failed to fetch CV data');
-        return response.json();
-      })
-      .then(data => {
-        // Cập nhật formData với dữ liệu từ server
-        // Đảm bảo template ID hợp lệ
-        const template = data.data.template || { id: getDefaultTemplate().id };
-        
-        // Kiểm tra xem template ID từ server có tồn tại trong hệ thống không
-        const validTemplate = getTemplateById(template.id);
-        if (!validTemplate) {
-          template.id = getDefaultTemplate().id;
-        }
-        
-        setFormData({
-          ...data.data,
-          template: template
-        });
-      })
-      .catch(error => {
-        console.error('Error fetching CV:', error);
-        toast.error('Could not load CV data. Please try again.');
-      });
+      };
+
+      fetchCV();
     }
   }, [location.state]);
 
-  // Cập nhật handleSaveWithName để xử lý cả create và update
+  // Sửa phần handleSaveWithName để sử dụng callApi
   const handleSaveWithName = async (cvName) => {
     setShowNameModal(false);
     const finalName = cvName || formData.name || `Untitled${Math.floor(Math.random() * 1000)}`;
@@ -324,48 +319,26 @@ const NewCV = () => {
     };
 
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        toast.error('You need to login to save your Resume');
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Xác định phương thức và URL API dựa vào mode
+      // Xác định phương thức và endpoint dựa vào mode
       const method = isEditing ? 'PUT' : 'POST';
-      const apiUrl = isEditing 
-        ? `http://localhost:5000/api/cv/${cvId}`
-        : 'http://localhost:5000/api/cv';
+      const endpoint = isEditing ? `/api/cv/${cvId}` : '/api/cv';
 
-      const response = await fetch(apiUrl, {
-        method: method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(formattedData)
-      });
+      const response = await callApi(endpoint, method, formattedData);
 
-      if (!response.ok) {
-        if (response.status === 401) {
-          toast.error('Your session has expired. Please login again.');
-          localStorage.removeItem('token');
-          throw new Error('Authentication failed');
-        }
-        throw new Error(`Error ${response.status}: ${await response.text()}`);
+      if (response.status === 'success') {
+        toast.success(`Resume "${finalName}" ${isEditing ? 'updated' : 'saved'} successfully!`);
+
+        // Chuyển hướng về trang được chỉ định hoặc dashboard
+        navigate(returnPath, {
+          state: { 
+            message: `Resume ${isEditing ? 'updated' : 'saved'} successfully!`,
+            cvId: response.data?._id
+          },
+          replace: true
+        });
+      } else {
+        throw new Error(response.message || `Failed to ${isEditing ? 'update' : 'save'} Resume`);
       }
-
-      const data = await response.json();
-      toast.success(`Resume "${finalName}" ${isEditing ? 'updated' : 'saved'} successfully!`);
-
-      // Chuyển hướng về trang được chỉ định hoặc dashboard
-      navigate(returnPath, {
-        state: { 
-          message: `Resume ${isEditing ? 'updated' : 'saved'} successfully!`,
-          cvId: data.data?._id
-        },
-        replace: true
-      });
     } catch (error) {
       console.error('Error saving Resume:', error);
       toast.error(`Failed to save Resume: ${error.message}`);

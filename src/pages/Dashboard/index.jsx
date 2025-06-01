@@ -11,6 +11,8 @@ import { Plus, Download } from 'lucide-react';
 import CVDownloadModal from '../../components/CVDownloadModal';
 import { useCVData } from '../../contexts/CVDataContext';
 import axiosInstance from '../../utils/axios';
+import { callApi } from '../../utils/api';
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -42,25 +44,8 @@ const Dashboard = () => {
     const confirmDelete = window.confirm("Are you sure you want to delete this CV?");
     if (confirmDelete) {
       try {
-        // Get token from localStorage
-        const token = localStorage.getItem('token');
-        
-        if (!token) {
-          throw new Error('No authentication token found');
-        }
-
-        // Call API to delete CV
-        const response = await fetch(`http://localhost:5000/api/cv/${id}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error(`Failed to delete CV: ${response.statusText}`);
-        }
+        // Use callApi instead of direct fetch
+        await callApi(`/api/cv/${id}`, 'DELETE');
 
         // Set CV to null in both local state and context
         setCvData({ cv: null });
@@ -84,31 +69,12 @@ const Dashboard = () => {
     setIsLoading(true);
     
     try {
-      // Get token from localStorage
-      const token = localStorage.getItem('token');
-      
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-      
-      // Actual API call to fetch CV
-      const response = await fetch('http://localhost:5000/api/cv', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch CV data: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
+      // Use callApi instead of direct fetch
+      const response = await callApi('/api/cv', 'GET');
       
       // Process the CV data - assuming API returns a single CV or the first one
-      // If data.data is an array, take the first item (the active CV)
-      const cvItem = Array.isArray(data.data) ? data.data[0] : data.data;
+      // If response.data is an array, take the first item (the active CV)
+      const cvItem = Array.isArray(response.data) ? response.data[0] : response.data;
       
       if (cvItem) {
         const processedCV = {
@@ -155,26 +121,13 @@ const Dashboard = () => {
     setJobDescriptionsLoading(true);
     
     try {
-      // Get token from localStorage
-      const token = localStorage.getItem('token');
-      
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-      
-      // API call to fetch job descriptions
-      const response = await axiosInstance.get('http://localhost:5000/api/job-descriptions', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await callApi('/api/job-descriptions', 'GET');
       
       // If successful, update state with job descriptions
-      if (response.data.status === 'success') {
-        setJobDescriptions(response.data.data || []);
+      if (response.status === 'success') {
+        setJobDescriptions(response.data || []);
       } else {
-        throw new Error(response.data.message || 'Failed to fetch job descriptions');
+        throw new Error(response.message || 'Failed to fetch job descriptions');
       }
     } catch (err) {
       console.error('Error fetching job descriptions:', err);

@@ -7,6 +7,7 @@ import GeneratingStep from './components/steps/GeneratingStep';
 import AnalyzingStep from './components/steps/AnalyzingStep';
 import { getDefaultTemplate } from '../../templates';
 import axiosInstance from '../../utils/axios';
+import { callApi } from '../../utils/api';
 
 const steps = [
   {
@@ -46,41 +47,34 @@ const NewResume = () => {
   const fetchCVData = async () => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
+      const response = await callApi('/api/cv', 'GET');
+      
+      // Kiểm tra status của response
+      if (response.status === 'success') {
+        // Đảm bảo response.data là array, nếu không thì dùng array rỗng
+        const cvList = response.data || [];
+        
+        const processedCVs = cvList.map(cv => ({
+          ...cv,
+          template: cv.template || { id: getDefaultTemplate().id },
+          score: calculateCVScore(cv),
+          progress: calculateCVProgress(cv)
+        }));
 
-      const response = await fetch('http://localhost:5000/api/cv', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+        setCvData({ cvs: processedCVs });
+
+        // If we have a selectedCV from navigation state, find and select it
+        if (location.state?.selectedCV) {
+          const cvFromState = processedCVs.find(
+            cv => cv._id === location.state.selectedCV._id
+          );
+          if (cvFromState) {
+            setSelectedCV(cvFromState);
+          }
         }
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch CV data: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      const processedCVs = data.data.map(cv => ({
-        ...cv,
-        template: cv.template || { id: getDefaultTemplate().id },
-        score: calculateCVScore(cv),
-        progress: calculateCVProgress(cv)
-      }));
-
-      setCvData({ cvs: processedCVs });
-
-      // If we have a selectedCV from navigation state, find and select it
-      if (location.state?.selectedCV) {
-        const cvFromState = processedCVs.find(
-          cv => cv._id === location.state.selectedCV._id
-        );
-        if (cvFromState) {
-          setSelectedCV(cvFromState);
-        }
+      } else {
+        // Nếu status không phải success thì throw error với message từ response
+        throw new Error(response.message || 'Failed to fetch CV data');
       }
     } catch (err) {
       console.error('Error fetching CV data:', err);

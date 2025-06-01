@@ -1,4 +1,4 @@
-import api from '../utils/api';
+import { callApi } from '../utils/api';
 
 /**
  * Service để gửi dữ liệu CV đã trích xuất đến API và nhận về các thông tin đã phân tích
@@ -11,25 +11,15 @@ class CVExtractService {
    */
   static async extractCVData(extractedText) {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/extract/cv', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ text: extractedText })
+      const response = await callApi('/api/extract/cv', 'POST', {
+        text: extractedText
       });
-      
-      if (!response.ok) {
-        if (response.status === 401) {
-          throw new Error('Authentication failed. Please login again.');
-        }
-        throw new Error(`API error: ${response.status}`);
+
+      if (response.status === 'success') {
+        return response.data;
+      } else {
+        throw new Error(response.message || 'Failed to extract CV data');
       }
-      
-      const data = await response.json();
-      return data.data;
     } catch (error) {
       console.error('Error extracting CV data:', error);
       throw error;
@@ -43,16 +33,14 @@ class CVExtractService {
    */
   static formatDataForNewCV(extractedData) {
     try {
-      // Nếu không có dữ liệu, throw error
+      // Kiểm tra dữ liệu đầu vào
       if (!extractedData) {
         throw new Error('No extracted data to format');
       }
 
       // Định dạng dữ liệu theo cấu trúc mà NewCV component có thể sử dụng
-      const formattedData = {
+      return {
         personalInfo: {
-          ...extractedData.personalInfo,
-          // Đảm bảo các trường cần thiết đều có
           firstName: extractedData.personalInfo?.firstName || '',
           lastName: extractedData.personalInfo?.lastName || '',
           professionalHeadline: extractedData.personalInfo?.professionalHeadline || '',
@@ -64,65 +52,63 @@ class CVExtractService {
           linkedin: extractedData.personalInfo?.linkedin || '',
         },
         summary: extractedData.summary || '',
-        experience: Array.isArray(extractedData.experience) 
-          ? extractedData.experience.map(exp => ({
-              ...exp,
-              position: exp.position || '',
-              company: exp.company || '',
-              location: exp.location || '',
-              startDate: exp.startDate || '',
-              endDate: exp.endDate || '',
-              description: exp.description || '',
-              isPresent: exp.isPresent || false
-            }))
-          : [],
-        education: Array.isArray(extractedData.education)
-          ? extractedData.education.map(edu => ({
-              ...edu,
-              degree: edu.degree || '',
-              school: edu.school || '',
-              location: edu.location || '',
-              startDate: edu.startDate || '',
-              endDate: edu.endDate || '',
-              description: edu.description || '',
-              isPresent: edu.isPresent || false
-            }))
-          : [],
-        skills: Array.isArray(extractedData.skills) 
-          ? extractedData.skills 
-          : [],
-        projects: Array.isArray(extractedData.projects)
-          ? extractedData.projects.map(proj => ({
-              ...proj,
-              title: proj.title || '',
-              description: proj.description || '',
-              link: proj.link || '',
-              technologies: Array.isArray(proj.technologies) ? proj.technologies : []
-            }))
-          : [],
-        certifications: Array.isArray(extractedData.certifications)
-          ? extractedData.certifications.map(cert => ({
-              ...cert,
-              name: cert.name || '',
-              issuer: cert.issuer || '',
-              date: cert.date || '',
-              description: cert.description || ''
-            }))
-          : [],
-        languages: Array.isArray(extractedData.languages)
-          ? extractedData.languages.map(lang => ({
-              ...lang,
-              language: lang.language || '',
-              proficiency: lang.proficiency || ''
-            }))
-          : []
+        experience: this.formatArrayData(extractedData.experience, {
+          position: '',
+          company: '',
+          location: '',
+          startDate: '',
+          endDate: '',
+          description: '',
+          isPresent: false
+        }),
+        education: this.formatArrayData(extractedData.education, {
+          degree: '',
+          school: '',
+          location: '',
+          startDate: '',
+          endDate: '',
+          description: '',
+          isPresent: false
+        }),
+        skills: Array.isArray(extractedData.skills) ? extractedData.skills : [],
+        projects: this.formatArrayData(extractedData.projects, {
+          title: '',
+          description: '',
+          link: '',
+          technologies: []
+        }),
+        certifications: this.formatArrayData(extractedData.certifications, {
+          name: '',
+          issuer: '',
+          date: '',
+          description: ''
+        }),
+        languages: this.formatArrayData(extractedData.languages, {
+          language: '',
+          proficiency: ''
+        })
       };
-
-      return formattedData;
     } catch (error) {
       console.error('Error formatting extracted data:', error);
       throw error;
     }
+  }
+
+  /**
+   * Helper function để format mảng dữ liệu với default values
+   * @param {Array} array - Mảng dữ liệu cần format
+   * @param {Object} defaultItem - Object chứa các giá trị mặc định
+   * @returns {Array} - Mảng đã được format
+   */
+  static formatArrayData(array, defaultItem) {
+    if (!Array.isArray(array)) {
+      return [];
+    }
+    
+    return array.map(item => ({
+      ...defaultItem,
+      ...item
+    }));
   }
 }
 

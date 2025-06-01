@@ -2,7 +2,7 @@
  * taskMap.js
  * Maps user intents to handler functions for the AI assistant
  */
-import axiosInstance from '../../../utils/axios';
+import api, { callApi } from '../../../utils/api';
 // Example handlers for different intents
 const handleGreeting = (data) => {
   return {
@@ -326,17 +326,17 @@ export const getSectionHelp = (sectionName) => {
 export const processChatbotAPI = async (userMessage, taskName, currentData = {}) => {
   try {
     // Gọi API chatbot
-    const response = await axiosInstance.post('/api/chatbot', {
+    const response = await callApi('/api/chatbot', 'POST', {
       userMessage,
       taskName,
       currentData
     });
     
     // Trả về kết quả từ API với cấu trúc phù hợp
-    if (response.data.status === 'success' && response.data.output) {
+    if (response.status === 'success' && response.output) {
       return {
-        output: response.data.output,
-        actions: response.data.output.actionRequired ? [response.data.output.actionRequired] : []
+        output: response.output,
+        actions: response.output.actionRequired ? [response.output.actionRequired] : []
       };
     }
     

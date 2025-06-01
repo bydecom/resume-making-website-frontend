@@ -1,40 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import axios from '../../../utils/api';
-
-// Create axios instance with interceptors
-const api = axios.create({
-  baseURL: 'http://localhost:5000/api'
-});
-
-// Add token to each request
-api.interceptors.request.use(config => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-// Handle expired token
-api.interceptors.response.use(
-  response => response,
-  error => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('userRole');
-      localStorage.removeItem('userData');
-      window.location.href = '/login';
-    }
-    return Promise.reject(error);
-  }
-);
+import api, { callApi } from '../../../utils/api';
 
 const AllUsers = () => {
   // State for users
   const [allUsers, setAllUsers] = useState([]);
   const [displayedUsers, setDisplayedUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   
   // State for filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -61,22 +34,16 @@ const AllUsers = () => {
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState(null);
 
-  // Fetch all users
+  // Fetch users function
   const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await api.get('/users');
-      
-      if (response.data && Array.isArray(response.data.data)) {
-        console.log('Fetched users:', response.data.data);
-        setAllUsers(response.data.data);
-      } else {
-        console.log('No users data in response or invalid format');
-        setAllUsers([]);
-      }
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      setAllUsers([]);
+      const response = await callApi('/api/users', 'GET');
+      setAllUsers(response.data || []);
+      setError(null);
+    } catch (err) {
+      setError('Failed to fetch users.');
+      console.error('Error fetching users:', err);
     } finally {
       setLoading(false);
     }
@@ -154,7 +121,7 @@ const AllUsers = () => {
     }
     
     try {
-      await api.delete(`/users/${userId}`);
+      await callApi(`/api/users/${userId}`, 'DELETE');
       
       // Update local state
       setAllUsers(prevUsers => prevUsers.filter(user => user._id !== userId));
@@ -243,9 +210,9 @@ const AllUsers = () => {
       const { name, email, isActive } = editUserData;
       const updateData = { name, email, isActive };
       
-      const response = await api.put(`/users/${editUserId}`, updateData);
+      const response = await callApi(`/api/users/${editUserId}`, 'PUT', updateData);
       
-      if (response.data && response.data.status === 'success') {
+      if (response.status === 'success') {
         // Update the user in our local state
         setAllUsers(prevUsers => 
           prevUsers.map(user => 

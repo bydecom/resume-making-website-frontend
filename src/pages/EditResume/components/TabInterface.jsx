@@ -8,7 +8,7 @@ const TabInterface = ({ currentStep, currentAdditionalSection, formData, mode, t
   const aiMode = mode === 'ai' ? 'cv' : mode; // Default to 'cv' mode if mode is 'ai'
   
   return (
-    <div className="bg-white rounded-lg shadow-lg overflow-hidden w-full max-h-[calc(100vh-200px)] border border-gray-200">
+    <div className="bg-white rounded-lg shadow-lg overflow-hidden w-full max-h-[calc(110vh-200px)] border border-gray-200">
       {/* Header */}
       <div className="bg-blue-600 px-4 py-3 border-b border-blue-700 text-white">
         <h3 className="text-lg font-medium flex items-center">
