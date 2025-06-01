@@ -16,7 +16,8 @@ import {
   BarChart3,
   ClipboardList,
   Download,
-  X
+  X,
+  Edit
 } from "lucide-react"
 import { getTemplateById } from '../../templates'
 import JobDescriptionDetails from './JobDescriptionDetails'
@@ -102,7 +103,7 @@ const CustomProgress = ({ value = 0, className = "" }) => {
   )
 }
 
-const ResumeReview = ({ resumeData, jobData, onClose }) => {
+const ResumeReview = ({ resumeData, jobData, onClose, onEdit }) => {
   const [activeView, setActiveView] = useState("cv")
   const [evaluationTab, setEvaluationTab] = useState("overview")
   const [approvalStatus, setApprovalStatus] = useState("pending")
@@ -134,9 +135,8 @@ const ResumeReview = ({ resumeData, jobData, onClose }) => {
   const Template = getTemplateById(templateId).component;
 
   const formatDate = (dateString) => {
-    // 1. Kiểm tra nếu dateString là null, undefined, hoặc chuỗi rỗng
     if (!dateString) {
-      return ""; // Hoặc "N/A", "Chưa có", tùy theo yêu cầu hiển thị
+      return ""; 
     }
 
     // 2. Thử tạo đối tượng Date
@@ -197,6 +197,13 @@ const ResumeReview = ({ resumeData, jobData, onClose }) => {
 
   const overallMatch = calculateOverallMatch()
 
+  // Add handleEdit function
+  const handleEdit = () => {
+    if (onEdit && actualResumeData?._id) {
+      onEdit(actualResumeData._id);
+    }
+  };
+
   return (
       <div className="flex flex-col h-screen bg-gray-50">
         {/* Backdrop with higher z-index */}
@@ -244,7 +251,7 @@ const ResumeReview = ({ resumeData, jobData, onClose }) => {
               <BarChart3 className="h-4 w-4" />
               <span className="hidden sm:inline">Evaluation</span>
                 </button>
-                <button
+                {/* <button
                   onClick={() => setActiveView("cv")}
                   className={`px-4 py-2 rounded-md flex items-center gap-2 transition-colors ${
                     activeView === "cv"
@@ -254,19 +261,17 @@ const ResumeReview = ({ resumeData, jobData, onClose }) => {
                 >
                   <FileText className="h-4 w-4" />
                   <span className="hidden sm:inline">Template</span>
-                </button>
+                </button> */}
           </div>
 
               {/* Right - Actions */}
               <div className="flex-1 flex items-center justify-end gap-2">
                 <button
-                  onClick={() => {
-                    // Add download logic
-                  }}
+                  onClick={handleEdit}
                   className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2"
                 >
-                  <Download className="h-5 w-5" />
-                  <span className="hidden sm:inline">Download</span>
+                  <Edit className="h-5 w-5" />
+                  <span className="hidden sm:inline">Edit</span>
                 </button>
                 <button
                   onClick={onClose}
