@@ -10,7 +10,7 @@ import DocumentProcessor from '../../../../services/DocumentProcessor';
 import cvService from '../../../../services/cvService';
 import { useCVData } from '../../../../contexts/CVDataContext';
 
-const ReviewCVStep = ({ cvData, isLoading, onSelect, initialCV }) => {
+const ReviewCVStep = ({ cvData, isLoading, onSelect, initialCV, setCvData }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { cvData: contextCvData } = useCVData();
@@ -97,8 +97,25 @@ const ReviewCVStep = ({ cvData, isLoading, onSelect, initialCV }) => {
   };
 
   const handleEditCV = (cv) => {
-    // Set edit data and show edit mode
-    setEditData({...cv});
+    // Chuẩn bị dữ liệu để edit
+    const editableCV = {
+      ...cv,
+      personalInfo: cv.personalInfo || {},
+      summary: cv.summary || "",
+      experience: cv.experience || [],
+      education: cv.education || [],
+      skills: cv.skills || [],
+      projects: cv.projects || [],
+      certifications: cv.certifications || [],
+      languages: cv.languages || [],
+      template: cv.template || { id: getDefaultTemplate().id },
+      name: cv.name || "Untitled CV",
+      progress: cv.progress || 0,
+      score: cv.score || 0
+    };
+
+    // Set edit data và hiển thị modal
+    setEditData(editableCV);
     setShowEditMode(true);
   };
 
@@ -109,16 +126,52 @@ const ReviewCVStep = ({ cvData, isLoading, onSelect, initialCV }) => {
     }));
   };
 
-  const handleSaveEdit = () => {
-    // Update the tempCV with edited data
-    setTempCV({...editData});
-    // If the edited CV was selected, update the selected CV too
-    if (selectedCV && selectedCV._id === editData._id) {
-      setSelectedCV({...editData});
+  const handleSaveEdit = async () => {
+    try {
+      if (editData.isTemporary) {
+        // Cập nhật temporary CV
+        setTempCV({...editData});
+        if (selectedCV && selectedCV._id === editData._id) {
+          setSelectedCV({...editData});
+        }
+      } else {
+        // Cập nhật existing CV trong cvData
+        if (cvData && cvData.cvs) {
+          const updatedCvs = cvData.cvs.map(cv => 
+            cv._id === editData._id ? {...editData} : cv
+          );
+          
+          // Cập nhật state ở component cha
+          setCvData({
+            ...cvData,
+            cvs: updatedCvs
+          });
+
+          // Cập nhật selectedCV nếu đang được chọn
+          if (selectedCV && selectedCV._id === editData._id) {
+            setSelectedCV({...editData});
+          }
+
+          try {
+            // Gọi API để cập nhật CV trong database
+            await cvService.updateCV(editData._id, editData);
+          } catch (error) {
+            console.error('Error updating CV in database:', error);
+            // Rollback changes if API call fails
+            setCvData({...cvData});
+            setSelectedCV(selectedCV);
+            throw new Error('Failed to save changes to database');
+          }
+        }
+      }
+      
+      // Đóng modal
+      setShowEditMode(false);
+      setEditData(null);
+    } catch (error) {
+      console.error('Error saving CV:', error);
+      alert('Error saving CV: ' + error.message);
     }
-    // Exit edit mode
-    setShowEditMode(false);
-    setEditData(null);
   };
 
   const handleCancelEdit = () => {
@@ -613,15 +666,7 @@ const ReviewCVStep = ({ cvData, isLoading, onSelect, initialCV }) => {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                navigate(`/edit-cv/${cv._id}`, {
-                                  state: { 
-                                    returnPath: '/new-resume',
-                                    previousState: {
-                                      currentStep: location.state?.currentStep || 1
-                                    },
-                                    isEditing: true
-                                  }
-                                });
+                                handleEditCV(cv);
                               }}
                               className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors flex items-center justify-center gap-2"
                             >

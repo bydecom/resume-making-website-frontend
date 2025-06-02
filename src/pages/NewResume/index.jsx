@@ -35,12 +35,12 @@ const steps = [
 const NewResume = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [currentStep, setCurrentStep] = useState(1);
-  const [selectedCV, setSelectedCV] = useState(location.state?.selectedCV || null);
+  const [currentStep, setCurrentStep] = useState(location.state?.currentStep || 1);
+  const [cvData, setCvData] = useState({ cvs: [] });
+  const [selectedCV, setSelectedCV] = useState(null);
   const [selectedMethod, setSelectedMethod] = useState(null);
   const [jobDescription, setJobDescription] = useState(null);
-  const [selectedTemplate, setSelectedTemplate] = useState(location.state?.selectedTemplate || null);
-  const [cvData, setCvData] = useState({ cvs: [] });
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   // Fetch CV data
@@ -210,6 +210,7 @@ const NewResume = () => {
           isLoading={isLoading}
           onSelect={handleCVSelect}
           initialCV={selectedCV}
+          setCvData={setCvData}
         />;
       case 2:
         return <ChooseMethodStep onMethodSelect={handleMethodSelect} selectedCV={selectedCV} />;
