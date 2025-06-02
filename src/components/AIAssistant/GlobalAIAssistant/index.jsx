@@ -144,17 +144,15 @@ const GlobalAIAssistant = () => {
     setMessages(newMessages);
     
     // Reset states when new message is sent
-    setShowTemplates(false); // Reset template display
-    setTemplates([]); // Clear templates data
-    setShowPdfUpload(false); // Reset PDF upload display
+    setShowTemplates(false);
+    setTemplates([]);
+    setShowPdfUpload(false);
     
     // Store the message text before clearing input
     const messageText = inputText;
     
-    // Clear input and completely reset textarea
+    // Clear input and reset textarea
     setInputText('');
-    
-    // Reset textarea to default state
     if (textareaRef.current) {
       setTimeout(() => {
         textareaRef.current.style.height = '40px';
@@ -166,8 +164,14 @@ const GlobalAIAssistant = () => {
     setIsTyping(true);
     
     try {
-      // Process the message using taskMap
-      const result = await processMessage(messageText, 'global');
+      // Process the message using taskMap with chat history
+      const result = await processMessage(
+        messageText, 
+        'global',
+        1,
+        {}, // currentData object
+        messages // Pass entire chat history
+      );
       
       // Handle any special actions returned
       if (result.actions && result.actions.length > 0) {

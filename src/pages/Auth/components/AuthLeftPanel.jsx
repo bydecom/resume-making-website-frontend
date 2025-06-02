@@ -1,10 +1,10 @@
 import React from "react";
 import { motion } from "framer-motion";
-
+import image from "../../../assets/Image.png";
 const AuthLeftPanel = ({
   title = "Welcome to BestCV.io",
   description = "Log in to your account to access your personalized dashboard and continue building your professional profile.",
-  imageSrc = "/placeholder.svg?height=400&width=400",
+
 }) => {
   return (
     <div className="hidden md:flex md:w-1/2 bg-gradient-to-br from-blue-50 to-blue-100 relative overflow-hidden">
@@ -25,6 +25,7 @@ const AuthLeftPanel = ({
             initial={{ opacity: 0, y: 20 }} 
             animate={{ opacity: 1, y: 0 }} 
             transition={{ duration: 0.6 }}
+            className="text-center"
           >
             <h1 className="text-3xl font-bold text-blue-600 mb-4">{title}</h1>
             <p className="text-base text-gray-600 mb-8">{description}</p>
@@ -39,7 +40,7 @@ const AuthLeftPanel = ({
             <div className="w-full h-full rounded-lg shadow-xl overflow-hidden bg-white">
               <div className="absolute inset-0 bg-blue-100 opacity-50 z-0"></div>
               <img
-                src={imageSrc}
+                src={image}
                 alt="Login illustration"
                 className="object-cover w-full h-full relative z-10"
               />
